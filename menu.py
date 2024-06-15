@@ -107,7 +107,7 @@ def SIDEBAR():
         # st.sidebar.page_link("app.py", label="HOME", icon="🏠")
         # st.sidebar.page_link(r"pages/DEVICE_TYPE.py", label="DEVICE TYPES", icon="🚗")
         # st.sidebar.page_link(r"pages/MANUFACTURERS.py", label="MANUFACTURERS", icon="🚗")
-        # st.sidebar.page_link(r"pages/MODELS.py", label="MODELS", icon="🚗")
+        # 
         # st.sidebar.page_link(r"pages/DEVICES.py", label="DEVICES", icon="📻")
         # st.sidebar.divider()
         # st.sidebar.page_link(r"pages/COMPANIES.py", label="COMPANIES", icon="🧬")

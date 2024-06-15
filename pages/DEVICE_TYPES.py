@@ -26,7 +26,7 @@ from db import SQL_ID_COUNT, SQL_INSERT, SQL_DEVICE_TYPES
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
-if not st.session_state[SSTATE.DEVICETYPES_COUNT]:
+if not st.session_state[SSTATE.LOGIN_STATUS]:
     st.switch_page(r"pages/PROFILE.py")
 
 if SSTATE.DEVICETYPES_COUNT not in st.session_state:

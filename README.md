@@ -6,7 +6,8 @@ Web framework to manage the main data of application
 # TASK:
 - Add Download Page
 - PAGE MODELS:
-    * Include Validation sliders
+    * Include Validation sliders in specifications
+    * JSON Fields Incomplete
 
 # WARNINGS:
 - BETA Version

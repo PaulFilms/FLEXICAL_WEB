@@ -87,7 +87,7 @@ def FORM_NEWMANUFACTURER():
             SQL_INSERT("MANUFACTURERS", VALUES)
             st.session_state[SSTATE.MANUFACTURERS_COUNT] += 1
             st.info("New Manufacturer Added !!", icon='🏁')
-            sleep(2)
+            sleep(3)
             st.rerun()
 
 if st.button("💾 CREATE NEW MANUFACTURER", use_container_width=True):
