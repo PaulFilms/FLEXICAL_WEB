@@ -16,7 +16,7 @@ import pandas as pd
 
 ## INTERNAL
 from menu import SSTATE, USUAL_ICONS, GET_FIRM, path_resources, SIDEBAR
-from db import conn, execute_query, SQL_SELECT_COLUMN, SQL_ID_COUNT, SQL_INSERT, SQL_MODELS, SQL_PROCEDURES
+from db import conn, execute_query, SQL_SELECT_COLUMN, SQL_ID_COUNT, SQL_INSERT, SQL_MODELS, SQL_PROCEDURES, SQL_PROCEDURES
 
 
 ## SESSION STATES
@@ -29,6 +29,11 @@ if SSTATE.MODELS_COUNT not in st.session_state:
     st.session_state[SSTATE.MODELS_COUNT] = 1
 
 if 'MODEL_COUNT' not in st.session_state:
+    st.session_state.MODEL_COUNT = 0
+
+if 'DB_DATA' not in st.session_state:
+    st.session_state.DB_DATA = None
+
     st.session_state.MODEL_COUNT = 0
 
 if 'DB_DATA' not in st.session_state:
@@ -58,6 +63,18 @@ class MODEL:
 
         def toJSON(self) -> str:
             return json.dumps(asdict(self))
+
+tbl_specification_config={
+        'RANGE1_MIN': st.column_config.NumberColumn(default=0.0),
+        'RANGE1_MAX': st.column_config.NumberColumn(default=0.0),
+        'RANGE2_MIN': st.column_config.NumberColumn(default=None),
+        'RANGE2_MAX': st.column_config.NumberColumn(default=None),
+        'EVALUATION': st.column_config.TextColumn(default="-"),
+        'RESOLUTION': st.column_config.NumberColumn(format="%.2e", default=0.0),
+        'C1': st.column_config.NumberColumn(format="%.2e", default=0.0),
+        'C2': st.column_config.NumberColumn(format="%.2e", default=0.0),
+        'C3': st.column_config.NumberColumn(format="%.2e", default=0.0),
+    }
 
 tbl_specification_config={
         'RANGE1_MIN': st.column_config.NumberColumn(default=0.0),
@@ -117,6 +134,65 @@ def FORM_NEWMODEL():
 def SQL_MODEL(MODEL_ID: str, COUNT: int):
     print(f"SQL MODEL DATA ({COUNT}):", GET_FIRM())
     return execute_query(conn.table('MODELS').select('*', count='exact').like("Id", MODEL_ID))
+
+def INSERT_PROCEDURE(MODEL_ID: str, DB: dict):
+    # print("INSERT_PROCEDURE")
+    # for field in DB:
+    #     print(DB[field])
+    execute_query(conn.table("MODELS").update({"DB": json.dumps(DB)}).eq("Id", MODEL_ID), ttl=0)
+    st.session_state.MODEL_COUNT += 1
+
+def get_selected(DATAFRAME: pd.DataFrame, COLUMN: str) -> tuple[pd.DataFrame, str]:
+    df_with_selections = DATAFRAME.copy()
+    df_with_selections.insert(0, "✔️", False)
+
+    # Get dataframe row-selections from user with st.data_editor
+    edited_df = st.data_editor(
+        df_with_selections,
+        hide_index=True,
+        column_config={
+            "✔️": st.column_config.CheckboxColumn(required=True, width='small'),
+            'PROCEDURE_ID': st.column_config.TextColumn(required=True, width='large'),
+        },
+        disabled=DATAFRAME.columns,
+        use_container_width=True
+    )
+
+    # Filter the dataframe using the temporary column, then drop the column
+    selected_rows = edited_df[edited_df["✔️"]]
+    selected_rows.drop("✔️", axis=1)
+
+    PROCEDURE: str = None
+    if len(selected_rows) == 1:
+        PROCEDURE = selected_rows['PROCEDURE_ID'].iloc[0]
+
+    return edited_df, PROCEDURE
+
+def FUNC(CURRENT_PROCEDURE: str):
+
+    if CURRENT_PROCEDURE:
+        DF = pd.DataFrame(st.session_state.DB_DATA['SPECIFICATIONS'].get(CURRENT_PROCEDURE), columns=list(tbl_specification_config.keys()))
+        DF['EVALUATION'] = DF['EVALUATION'].astype(str)
+        DF = DF.reset_index()
+        del DF['index']
+
+        st.text("") # SEPARATOR
+        st.text("") # SEPARATOR
+        TBL_DATA = st.data_editor(
+            DF,
+            hide_index=True,
+            num_rows='dynamic',
+            column_config=tbl_specification_config,
+            use_container_width=True
+        )
+
+        if st.button("UPDATE DATA DB"):
+            if len(TBL_DATA) == 0:
+                st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = {}
+            else:
+                st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = TBL_DATA.to_dict()
+            INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
+            st.rerun()
 
 def INSERT_PROCEDURE(MODEL_ID: str, DB: dict):
     # print("INSERT_PROCEDURE")
