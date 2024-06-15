@@ -42,6 +42,8 @@ if st.session_state[SSTATE.LOGIN_STATUS]:
     st.sidebar.page_link(r"pages/MANUFACTURERS.py", label="MANUFACTURERS", icon="🚗")
     st.sidebar.page_link(r"pages/MODELS.py", label="MODELS", icon="🚗")
     st.sidebar.page_link(r"pages/PROCEDURES.py", label=":blue-background[PROCEDURES]", icon="🧬", use_container_width=True)
+    st.sidebar.page_link(r"pages/DATABASE.py", label=":blue-background[DATABASE]", icon="🧬", use_container_width=True)
+    st.sidebar.page_link(r"pages/TEMPLATES.py", label=":blue-background[TEMPLATES]", icon="🧬", use_container_width=True)
 
 
 ## PAGE
