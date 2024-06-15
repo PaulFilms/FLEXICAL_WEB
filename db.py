@@ -7,7 +7,7 @@ pip install st-supabase-connection
 '''
 
 ## PYTHON LIBRARIES
-import json
+import os, json
 from dataclasses import dataclass, asdict, fields
 
 ## IMPORTED LIBRARIES

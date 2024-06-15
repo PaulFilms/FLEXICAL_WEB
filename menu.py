@@ -22,11 +22,8 @@ import streamlit as st
 ## INTERNAL
 ...
 
-
-## COMPONENTS
+## SESSION STATES
 ## __________________________________________________________________________________________________
-
-path_resources = r"resources"
 
 class SSTATE(Enum):
     LOGIN_STATUS = "LOGIN_STATUS"
@@ -34,6 +31,15 @@ class SSTATE(Enum):
     MANUFACTURERS_COUNT = "MANUFACTURERS_COUNT"
     MODELS_COUNT = "MODELS_COUNT"
     PROCEDURES_COUNT = "PROCEDURES_COUNT"
+
+if SSTATE.LOGIN_STATUS not in st.session_state:
+    st.session_state[SSTATE.LOGIN_STATUS] = None
+
+
+## COMPONENTS
+## __________________________________________________________________________________________________
+
+path_resources = r"resources"
 
 class USUAL_ICONS(Enum):
     HOME = "🏠"
@@ -54,17 +60,13 @@ def INFOBOX(info: str):
 
 def GET_FIRM() -> str:
     date_now = datetime.now().strftime("%Y-%m-%d / %H:%M")
-    return f"{os.getlogin()} [{date_now}]"
+    return f"{st.session_state[SSTATE.LOGIN_STATUS]} [{date_now}]"
 
 def COL_SCI(label: str):
     return st.column_config.NumberColumn(label=label, format="%.2e")
 
 
-## SESSION STATES
-## __________________________________________________________________________________________________
 
-if SSTATE.LOGIN_STATUS not in st.session_state:
-    st.session_state[SSTATE.LOGIN_STATUS] = None
 
 
 ## MENUS
