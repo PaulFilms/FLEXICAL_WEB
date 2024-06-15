@@ -2,7 +2,9 @@
 Web framework to manage the main data of application
 
 # TASK:
-- Debug some functions
+- Add Download Page
+- PAGE MODELS:
+    * Include Validation sliders
 
 # WARNINGS:
-- Not now
+- BETA Version
