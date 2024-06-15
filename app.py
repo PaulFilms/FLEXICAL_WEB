@@ -40,6 +40,7 @@ if st.session_state[SSTATE.LOGIN_STATUS]:
     #     with st.sidebar.popover(USUAL_ICONS.EXPANDER.value, use_container_width=True):
     st.sidebar.page_link(r"pages/DEVICE_TYPES.py", label="DEVICE TYPES", icon="🚗")
     st.sidebar.page_link(r"pages/MANUFACTURERS.py", label="MANUFACTURERS", icon="🚗")
+    st.sidebar.page_link(r"pages/MODELS.py", label="MODELS", icon="🚗")
     st.sidebar.page_link(r"pages/PROCEDURES.py", label=":blue-background[PROCEDURES]", icon="🧬", use_container_width=True)
 
 
@@ -60,6 +61,7 @@ with st.container(border=True):
 st.text("DOCUMENTATION")
 with st.container(border=True):
     st.page_link("https://pablopila.notion.site/FLEXICAL-cb070d967f6b4f46829a349731095be5?pvs=4", label="🧬 NOTION WEB PAGE", use_container_width=True)
+    st.page_link("https://github.com/PaulFilms/FLEXICAL_WEB", label="🧬 GITHUB REPOSITORY", use_container_width=True)
 
 st.image(r"https://file.notion.so/f/f/21f0811a-a634-472d-8c7b-9a0052fd6b63/969d0671-e768-4a4d-b328-a5f8f0361054/Untitled.png?id=f15b711f-5207-4f97-b551-48c5fbe36521&table=block&spaceId=21f0811a-a634-472d-8c7b-9a0052fd6b63&expirationTimestamp=1718373600000&signature=-f23vCxQFa0Zn8FS-s_tKV0bkpBJTw9jEN1QnrmxQ4g&downloadName=Untitled.png")
 
