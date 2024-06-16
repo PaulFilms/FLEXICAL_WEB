@@ -4,14 +4,16 @@ FLEXICAL v3 | PROFILE
 '''
 
 ## PYTHON LIBRARIES
+import os, random
 from time import sleep
 
 ## IMPORTED LIBRARIES
 import streamlit as st
+import pandas as pd
 
 ## INTERNAL
 from menu import SSTATE, SIDEBAR, USUAL_ICONS
-from db import SQL_MODELS
+from db import SQL_MODELS, GET_LOCAL_DB, SQL_DEVICE_TYPES, SQL_SELECT_COLUMN
 
 
 
@@ -27,7 +29,7 @@ if SSTATE.LOGIN_STATUS not in st.session_state:
 ## __________________________________________________________________________________________________
 
 SIDEBAR()
-st.sidebar.divider()
+# st.sidebar.divider()
 st.sidebar.page_link("app.py", label="HOME", icon="🏠")
 
 
@@ -45,138 +47,91 @@ with st.container(border=True):
     st.caption("This is your Profile page.")
     st.caption("In the next upddates, will you check your data")
 
-if st.session_state[SSTATE.LOGIN_STATUS]:
-    st.divider()
-    text_contents = '''This is some text'''
-    st.download_button(USUAL_ICONS.SAVE.value + " DOWNLOAD DESKTOP APP", text_contents, use_container_width=True)
-    st.download_button(USUAL_ICONS.SAVE.value + " DOWNLOAD DATABASE", text_contents, use_container_width=True)
+# st.divider()
 
-st.divider()
+col12, col22 = st.columns(2)
 
-import pandas as pd
+with col12:
 
-# create a sample dataframe
-# if "df" not in st.session_state:
-#     st.
-st.session_state.df = pd.DataFrame({
-    'column1': ['apple', 'banana', 'banana', 'cherry', 'date', 'date', 'date', 'elderberry'],
-    'column2': ['red', 'yellow', 'green', 'red', 'yellow', 'green', 'green', 'red'],
-    'column3': [1, 2, 2, 3, 4, 4, 4, 5]
-})
+    if st.session_state[SSTATE.LOGIN_STATUS]:
+        with st.expander(USUAL_ICONS.EXPANDER.value + "   OPTIONS", expanded=True):
+            text_contents = '''This is some text'''
+            st.download_button(USUAL_ICONS.SAVE.value + " DOWNLOAD DESKTOP APP", text_contents, use_container_width=True)
+            # st.download_button(USUAL_ICONS.SAVE.value + " DOWNLOAD DATABASE", text_contents, use_container_width=True)
 
-st.session_state.column1_values = None
-st.session_state.column2_values = None
-st.session_state.column3_values = None
+            ## GET LOCAL DATABASE
+            holder = st.empty()
+            if holder.button("GET DATABASE", use_container_width=True):
+                with st.spinner("Generating SQLite database..."):
+                    GET_LOCAL_DB()
+                
+                holder.download_button(
+                    label="📩 DOWNLOAD DATABASE",
+                    data=open("flexical.db", "rb").read(),
+                    file_name="flexical.db",
+                    mime="application/x-sqlite3",
+                    use_container_width=True
+                )
+                os.remove("flexical.db")
 
-def filtered() -> pd.DataFrame:
-    df_fltr = st.session_state.df
-    if st.session_state.column1_values:
-        df_fltr = df_fltr[df_fltr['column1']==st.session_state.column1_values]
-    if st.session_state.column2_values:
-        df_fltr = df_fltr[df_fltr['column2']==st.session_state.column2_values]
-    if st.session_state.column3_values:
-        df_fltr = df_fltr[df_fltr['column3']==st.session_state.column3_values]
-    return df_fltr
+with col22:
+    st.text("Get support:")
+    prompt = st.chat_input("Any Question or support??")
+    if prompt:
+        st.write(f"User has sent the following prompt:")
+        st.write(f" -> {prompt}")
 
-# create three selectboxes for each column
-# column1_values = sorted(filtered()['column1'].unique().tolist())
-# column2_values = sorted(filtered()['column2'].unique().tolist())
-# column3_values = sorted(filtered()['column3'].unique().tolist())
 
-st.session_state.column1_values = st.selectbox('Select column1 value:', sorted(filtered()['column1'].unique().tolist()), index=None)
-st.session_state.column2_values = st.selectbox('Select column2 value:', sorted(filtered()['column2'].unique().tolist()), index=None)
-st.session_state.column3_values = st.selectbox('Select column3 value:', sorted(filtered()['column3'].unique().tolist()), index=None)
 
-# # filter the dataframe based on the selected values
-# filtered_df = st.session_state.df.query(
-#     f"column1 == '{selected_column1}' and column2 == '{selected_column2}' and column3 == {selected_column3}"
-# )
+st.subheader('STADISTICS:', divider='blue')
 
-# # display the filtered dataframe
-# st.write(st.session_state.df)
+col12, col22 = st.columns(2)
 
-st.write(filtered())
-
-import sqlite3
-
-# st.download_button(
-#     label="Download SQLite Database",
-#     data=lambda: open("mydatabase.db", "rb").read(),
-#     file_name="mydatabase.db",
-#     mime="application/x-sqlite3",
-#     key="download_db"
-# )
-
-holder = st.empty()
-
-if holder.button("GET DATABASE"):
-    with st.spinner("Generating SQLite database..."):
-        conn_sqlite = sqlite3.connect("mydatabase.db")
-        cur_sqlite = conn_sqlite.cursor()
-        # create a table in the SQLite database
-        cur_sqlite.execute("""
-            CREATE TABLE MODELS (
-                Id TEXT PRIMARY KEY,
-                MODEL TEXT,
-                MANUFACTURER INTEGER,
-                DEVICE_TYPE TEXT,
-                DESCRIPTION TEXT,
-                INFO TEXT,
-                DB BLOB,
-                FIRM TEXT
-            );
-        """)
-        for e in SQL_MODELS(0):
-            # print(e)
-            SQL = f"""INSERT INTO MODELS ('Id', 'MODEL', 'MANUFACTURER', 'DEVICE_TYPE', 'DESCRIPTION', 'INFO', 'DB', 'FIRM') VALUES ('{e['Id']}', '{e['MODEL']}', '{e['MANUFACTURER']}', '{e['DEVICE_TYPE']}', '{e['DESCRIPTION']}', '{e['INFO']}', '{e['DB']}', '{e['FIRM']}');"""
-            cur_sqlite.execute(SQL)
-        conn_sqlite.commit()
-        cur_sqlite.close()
-        conn_sqlite.close()
-        sleep(2)
-    
-    holder.download_button(
-        label="Download SQLite Database",
-        data=open("mydatabase.db", "rb").read(),
-        file_name="mydatabase.db",
-        mime="application/x-sqlite3"
+with col12:
+    SQL = SQL_SELECT_COLUMN("DEVICE_TYPES", "Id")
+    # st.write(SQL)
+    # print(SQL)
+    d = {
+        "DEVICE TYPE": [type for type in SQL],
+        "Nº OF CALIBRATIONS": [random.randint(1, 100) for type in SQL]
+    }
+    st.dataframe(
+        data=pd.DataFrame(d),
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "DEVICE TYPE": st.column_config.TextColumn(),
+            "Nº OF CALIBRATIONS": st.column_config.ProgressColumn()
+        }
     )
 
-# create a context manager to generate the SQLite database file
-# with st.spinner("Generating SQLite database..."):
-#     with open("mydatabase.db", "wb") as f:
-#         # create a connection to a new in-memory SQLite database
-#         conn = sqlite3.connect(":memory:")
+with col22:
+    import matplotlib.pyplot as plt
+    import numpy as np
 
-#         # create a cursor for the SQLite database
-#         cur = conn.cursor()
+    fig, ax = plt.subplots()
+    fig.patch.set_alpha(0)
 
-#         # create a table in the SQLite database
-#         cur.execute("""
-#         CREATE TABLE MODELS (
-#             Id TEXT PRIMARY KEY,
-#             MODEL TEXT,
-#             MANUFACTURER INTEGER,
-#             DEVICE_TYPE TEXT,
-#             DESCRIPTION TEXT,
-#             INFO TEXT,
-#             DB BLOB,
-#             FIRM TEXT
-#             );
-#         """)
+    size = 0.3
+    vals = np.array([[60., 32.], [37., 40.], [29., 10.]])
 
-#         # insert some data into the table
-#         for e in SQL_MODELS(0):
-#             # print(e)
-#             SQL = f"""INSERT INTO MODELS ('Id', 'MODEL', 'MANUFACTURER', 'DEVICE_TYPE', 'DESCRIPTION', 'INFO', 'DB', 'FIRM') VALUES ('{e['Id']}', '{e['MODEL']}', '{e['MANUFACTURER']}', '{e['DEVICE_TYPE']}', '{e['DESCRIPTION']}', '{e['INFO']}', '{e['DB']}', '{e['FIRM']}');"""
-#             cur.execute(SQL)
+    cmap = plt.colormaps["tab20c"]
+    outer_colors = cmap(np.arange(3)*4)
+    inner_colors = cmap([1, 2, 5, 6, 9, 10])
 
-#         # commit the changes to the SQLite database
-#         conn.commit()
+    ax.pie(vals.sum(axis=1), radius=1, colors=outer_colors,
+        wedgeprops=dict(width=size, edgecolor='w'))
 
-#         # write the SQLite database file to disk
-#         f.write(conn.backup("main", "."))
+    ax.pie(vals.flatten(), radius=1-size, colors=inner_colors,
+        wedgeprops=dict(width=size, edgecolor='w'))
 
-#         # close the database connection
-#         cur.close()
-#         conn.close()
+    # ax.set(
+    #     aspect="equal", 
+    #     title='Pie plot with `ax.pie`',
+    #     # color_cycle="white"
+    #     # color='blue'
+    # )
+    ax.set_title('CALIBRATIONS BY DEVICE TYPE', fontsize=10, color= 'white', fontweight='bold');
+    # plt.show()
+
+    st.pyplot(fig)

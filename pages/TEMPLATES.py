@@ -23,8 +23,8 @@ from db import conn, execute_query
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
-if not st.session_state[SSTATE.LOGIN_STATUS]:
-    st.switch_page(r"pages/PROFILE.py")
+# if not st.session_state[SSTATE.LOGIN_STATUS]:
+#     st.switch_page(r"pages/PROFILE.py")
 
 ## SIDEBAR
 ## __________________________________________________________________________________________________
@@ -36,4 +36,4 @@ st.sidebar.divider()
 ## PAGE
 ## __________________________________________________________________________________________________
 
-st.selectbox
+st.selectbox("TEMPLATE Id", options=[])

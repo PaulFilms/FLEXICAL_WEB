@@ -1,14 +1,16 @@
 '''
 FLEXICAL v3 | DB
 
-https://docs.streamlit.io/develop/tutorials/databases/supabase
-pip install st-supabase-connection
+`SUPABASE INFO:`
+    pip install st-supabase-connection
+    https://docs.streamlit.io/develop/tutorials/databases/supabase
 
 '''
 
 ## PYTHON LIBRARIES
-import os, json
+import os, json, sqlite3
 from dataclasses import dataclass, asdict, fields
+from time import sleep
 
 ## IMPORTED LIBRARIES
 import streamlit as st
@@ -89,8 +91,6 @@ def SQL_CUSTOMERS(COUNT: int):
     SQL = execute_query(conn.table("CUSTOMERS").select('*').order("Id"), ttl="10m")
     return SQL.data
 
-# import sqlite3
-
 # def get_local_db():
 #     conn_sqlite = sqlite3.connect("mydatabase.db")
 #     cur_sqlite = conn_sqlite.cursor()
@@ -117,3 +117,34 @@ def SQL_CUSTOMERS(COUNT: int):
 
 # get_local_db()
 
+def GET_LOCAL_DB() -> None:
+    path_file = "flexical.db"
+    if os.path.exists(path_file):
+        os.remove(path_file)
+    
+    ## SQLITE
+    conn_sqlite = sqlite3.connect(path_file)
+    cur_sqlite = conn_sqlite.cursor()
+
+    # create a table in the SQLite database
+    cur_sqlite.execute("""
+        CREATE TABLE MODELS (
+            Id TEXT PRIMARY KEY,
+            MODEL TEXT,
+            MANUFACTURER INTEGER,
+            DEVICE_TYPE TEXT,
+            DESCRIPTION TEXT,
+            INFO TEXT,
+            DB BLOB,
+            FIRM TEXT
+        );
+    """)
+    for e in SQL_MODELS(0):
+        SQL = f"""INSERT INTO MODELS ('Id', 'MODEL', 'MANUFACTURER', 'DEVICE_TYPE', 'DESCRIPTION', 'INFO', 'DB', 'FIRM') VALUES ('{e['Id']}', '{e['MODEL']}', '{e['MANUFACTURER']}', '{e['DEVICE_TYPE']}', '{e['DESCRIPTION']}', '{e['INFO']}', '{e['DB']}', '{e['FIRM']}');"""
+        cur_sqlite.execute(SQL)
+    conn_sqlite.commit()
+    cur_sqlite.close()
+    conn_sqlite.close()
+    
+    ## FIN
+    sleep(2)

@@ -54,9 +54,22 @@ class USUAL_ICONS(Enum):
     DOWN = "🔽"
     QUESTION = "❓"
     EXPANDER = chr(8801)
+    LOCK = "🔒"
 
 def INFOBOX(info: str):
     return st.warning(info, icon="🚨")
+
+@st.experimental_dialog(title="❓")
+def YESNOBOX(info: str, FUNCTION):
+    st.text(info)
+    col12, col22 = st.columns(2)
+    with col12:
+        if st.button("YES", use_container_width=True):
+            FUNCTION()
+            st.rerun()
+    with col22:
+        if st.button("NO", use_container_width=True):
+            st.rerun()
 
 def GET_FIRM() -> str:
     date_now = datetime.now().strftime("%Y-%m-%d / %H:%M")
@@ -94,32 +107,31 @@ def LOGIN():
 def SIDEBAR():
     if st.session_state[SSTATE.LOGIN_STATUS]:
         with st.sidebar.popover(f"🌐 {st.session_state[SSTATE.LOGIN_STATUS]}", use_container_width=True):
-
-            if st.button("⚙️ PROFILE", use_container_width=True):
-                st.switch_page(r"pages/PROFILE.py")
-
             if st.button(f"{USUAL_ICONS.EXIT.value} [Log out]", use_container_width=True, help="Logout"):
                 st.session_state[SSTATE.LOGIN_STATUS] = None
                 st.switch_page(r"app.py")
-                st.rerun()
-            
-            # st.sidebar.page_link(r"pages/PROFILE.py", label="PROFILE", icon="⚙️")
-        
-        # st.sidebar.divider()
-        # st.sidebar.page_link("app.py", label="HOME", icon="🏠")
-        # st.sidebar.page_link(r"pages/DEVICE_TYPE.py", label="DEVICE TYPES", icon="🚗")
-        # st.sidebar.page_link(r"pages/MANUFACTURERS.py", label="MANUFACTURERS", icon="🚗")
-        # 
-        # st.sidebar.page_link(r"pages/DEVICES.py", label="DEVICES", icon="📻")
-        # st.sidebar.divider()
-        # st.sidebar.page_link(r"pages/COMPANIES.py", label="COMPANIES", icon="🧬")
-        # st.sidebar.page_link(r"pages/TEMPLATES.py", label="TEMPLATES", icon="📱")
-
-        # st.sidebar.divider()
-        # st.sidebar.page_link(r"pages/TEST.py", label="TEST", icon="🧬")
-
-        # st.toast("Estas dentro Bro !!")
-
+            if st.button("⚙️ PROFILE", use_container_width=True):
+                st.switch_page(r"pages/PROFILE.py")
     else: 
         if st.sidebar.button("🙋‍♀️🙋‍♂️ LOGIN", use_container_width=True):
             LOGIN()
+
+def SB_EDITORS():
+    with st.sidebar.expander("__✏️ EDITORS__", expanded=True):
+        st.text("")
+        st.page_link(r"pages/MODELS.py", label="MODELS") # , icon="🚗"
+        st.page_link(r"pages/PROCEDURES.py", label="PROCEDURES", use_container_width=True)
+        st.page_link(r"pages/TEMPLATES.py", label="TEMPLATES", use_container_width=True)
+
+
+
+## TEMP
+## __________________________________________________________________________________________________
+
+# st.sidebar.page_link("app.py", label="HOME", icon="🏠")
+# st.sidebar.page_link(r"pages/PROFILE.py", label=":blue-background[PROFILE]", icon="🧬", use_container_width=True)
+# st.sidebar.page_link(r"pages/DEVICE_TYPES.py", label="DEVICE TYPES", icon="🚗")
+# st.sidebar.page_link(r"pages/MANUFACTURERS.py", label="MANUFACTURERS", icon="🚗")
+# st.sidebar.page_link(r"pages/MODELS.py", label="MODELS", icon="🚗")
+# st.sidebar.page_link(r"pages/PROCEDURES.py", label=":blue-background[PROCEDURES]", icon="🧬", use_container_width=True)
+# st.sidebar.page_link(r"pages/TEMPLATES.py", label=":blue-background[TEMPLATES]", icon="🧬", use_container_width=True)

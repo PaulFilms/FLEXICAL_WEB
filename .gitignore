@@ -29,4 +29,5 @@ dmypy.json
 cython_debug/
 
 # Streamlit
+.devcontainer
 secrets.toml

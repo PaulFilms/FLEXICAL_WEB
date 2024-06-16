@@ -15,7 +15,7 @@ import streamlit as st
 import pandas as pd
 
 ## INTERNAL
-from menu import SSTATE, USUAL_ICONS, GET_FIRM, path_resources, SIDEBAR
+from menu import SSTATE, USUAL_ICONS, GET_FIRM, path_resources, SIDEBAR, SB_EDITORS, YESNOBOX
 from db import conn, execute_query, SQL_SELECT_COLUMN, SQL_ID_COUNT, SQL_INSERT, SQL_MODELS, SQL_PROCEDURES, SQL_PROCEDURES
 
 
@@ -245,7 +245,7 @@ def FUNC(CURRENT_PROCEDURE: str):
             use_container_width=True
         )
 
-        if st.button("UPDATE DATA DB"):
+        if st.button(USUAL_ICONS.UPDATE.value + " UPDATE SPECIFICATIONS"):
             if len(TBL_DATA) == 0:
                 st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = {}
             else:
@@ -258,234 +258,242 @@ def FUNC(CURRENT_PROCEDURE: str):
 ## __________________________________________________________________________________________________
 
 SIDEBAR()
-st.sidebar.divider()
-st.sidebar.page_link("app.py", label="HOME", icon="🏠")
+# st.sidebar.page_link("app.py", label="HOME", icon="🏠")
 if st.session_state[SSTATE.LOGIN_STATUS]:
-    st.sidebar.page_link(r"pages/DEVICE_TYPES.py", label="DEVICE TYPES", icon="🚗")
-    st.sidebar.page_link(r"pages/MANUFACTURERS.py", label="MANUFACTURERS", icon="🚗")
-    # sd_btn_new = st.sidebar.button("💾 NEW MODEL", use_container_width=True)
-    st.sidebar.page_link(r"pages/PROCEDURES.py", label=":blue-background[PROCEDURES]", icon="🧬", use_container_width=True)
-
+    st.sidebar.page_link("app.py", label="HOME", icon="🏠")
+    st.sidebar.page_link(r"pages/DATABASE.py", label="DATABASE", use_container_width=True) # , icon="🧬" / ":blue-background[DATABASE]"
+    SB_EDITORS()
 
 
 ## PAGE
 ## __________________________________________________________________________________________________
 
 st.logo(os.path.join(path_resources, r"LOGO2.svg"))
-st.image(os.path.join(path_resources, r"models.svg"), use_column_width=False)
-st.divider()
+# st.image(os.path.join(path_resources, r"models.svg"), use_column_width=False)
+# st.divider()
 
-tab_db, tab_editor = st.tabs(["📒 DATABASE", "✏️ EDITOR"])
+# tab_db, tab_editor = st.tabs(["📒 DATABASE", "✏️ EDITOR"])
 
 ## DATABASE
 ## __________________________________________________________________________________________________
 
-with tab_db:
+# with tab_db:
 
-    if st.button("💾 CREATE NEW MODEL", use_container_width=True): # or sd_btn_new:
-        FORM_NEWMODEL()
+#     if st.button("💾 CREATE NEW MODEL", use_container_width=True): # or sd_btn_new:
+#         FORM_NEWMODEL()
 
 
-    if st.session_state[SSTATE.LOGIN_STATUS]:
+#     if st.session_state[SSTATE.LOGIN_STATUS]:
 
-        st.text("") # SEPARATOR
-        st.text("") # SEPARATOR
-        st.subheader('DATABASE:', divider='blue')
+#         st.text("") # SEPARATOR
+#         st.text("") # SEPARATOR
+#         st.subheader('DATABASE:', divider='blue')
 
-        # st.sidebar.markdown("""
-        # [➡️ DATABASE](#database)
-        # """, unsafe_allow_html=True)
+#         # st.sidebar.markdown("""
+#         # [➡️ DATABASE](#database)
+#         # """, unsafe_allow_html=True)
 
-        placeholder = st.empty()
-        if placeholder.button("🧬 LOAD DATABASE", use_container_width=True):
-            with placeholder.expander("🧬 DATABASE", expanded=True):
-                SQL = SQL_MODELS(st.session_state[SSTATE.MODELS_COUNT])
-                DATAFRAME = pd.DataFrame(SQL)
-                del DATAFRAME["DB"]
-                st.dataframe(
-                    # data=pd.DataFrame(SQL),
-                    data=DATAFRAME,
-                    use_container_width=True,
-                    hide_index=True
-                )
+#         placeholder = st.empty()
+#         if placeholder.button("🧬 LOAD DATABASE", use_container_width=True):
+#             with placeholder.expander("🧬 DATABASE", expanded=True):
+#                 SQL = SQL_MODELS(st.session_state[SSTATE.MODELS_COUNT])
+#                 DATAFRAME = pd.DataFrame(SQL)
+#                 del DATAFRAME["DB"]
+#                 st.dataframe(
+#                     # data=pd.DataFrame(SQL),
+#                     data=DATAFRAME,
+#                     use_container_width=True,
+#                     hide_index=True
+#                 )
 
 
 ## EDITOR
 ## __________________________________________________________________________________________________
 
-with tab_editor:
+# with tab_editor:
 
-    col12, col22 = st.columns(2)
+st.text('✏️ SELECT MODEL Id')
 
-    # if 'MODEL_ID' not in st.session_state:
-    #     st.session_state.MODEL_ID = str()
+col12, col22 = st.columns(2)
 
-    with col12:
-        # MODEL_ID = 
-        holder = st.empty()
-        MODEL_ID = holder.text_input(label="✏️ ENTER MODEL Id", value="")
+# if 'MODEL_ID' not in st.session_state:
+#     st.session_state.MODEL_ID = str()
 
-    with col22:
+with col12:
+    # MODEL_ID = 
+    holder = st.empty()
+    MODEL_ID = holder.text_input(label="✏️ ENTER MODEL Id", value="", label_visibility='collapsed')
 
-        # 
-        # DATAFRAME = pd.DataFrame(SQL)
+with col22:
+
+    # 
+    # DATAFRAME = pd.DataFrame(SQL)
+    # print(DATAFRAME)
+
+    # st.text("")
+    with st.popover(USUAL_ICONS.EXPANDER.value):
+        SQL = SQL_MODELS(st.session_state[SSTATE.MODELS_COUNT])
+        DATAFRAME = pd.DataFrame(SQL)
+        DATAFRAME = DATAFRAME[['Id', "DEVICE_TYPE", 'MANUFACTURER', 'MODEL']]
         # print(DATAFRAME)
 
-        st.text("")
-        with st.popover(USUAL_ICONS.EXPANDER.value):
-            SQL = SQL_MODELS(st.session_state[SSTATE.MODELS_COUNT])
-            DATAFRAME = pd.DataFrame(SQL)
-            DATAFRAME = DATAFRAME[['Id', "DEVICE_TYPE", 'MANUFACTURER', 'MODEL']]
-            # print(DATAFRAME)
+        FLTR_DEVICE: str = None
+        FLTR_MANUFACTURER: str = None
+        FLTR_MODEL: str = None
 
-            FLTR_DEVICE: str = None
-            FLTR_MANUFACTURER: str = None
-            FLTR_MODEL: str = None
-
-            def get_filter() -> pd.DataFrame:
-                df_filtered = DATAFRAME
-                if FLTR_DEVICE:
-                    df_filtered = df_filtered[df_filtered['DEVICE_TYPE']==FLTR_DEVICE]
-                if FLTR_MANUFACTURER:
-                    df_filtered = df_filtered[df_filtered['MANUFACTURER']==FLTR_MANUFACTURER]
-                if FLTR_MODEL:
-                    df_filtered = df_filtered[df_filtered['MODEL']==FLTR_MODEL]
-                return df_filtered
-
-            FLTR_DEVICE = st.selectbox("DEVICE TYPE", options=get_filter()['DEVICE_TYPE'].unique().tolist(), index=None)
-            FLTR_MANUFACTURER = st.selectbox("MANUFACTURER", options=sorted(get_filter()['MANUFACTURER'].unique().tolist()), index=None)
-            FLTR_MODEL = st.selectbox("MODEL", options=get_filter()['MODEL'].unique().tolist(), index=None)
-
+        def get_filter() -> pd.DataFrame:
+            df_filtered = DATAFRAME
+            if FLTR_DEVICE:
+                df_filtered = df_filtered[df_filtered['DEVICE_TYPE']==FLTR_DEVICE]
+            if FLTR_MANUFACTURER:
+                df_filtered = df_filtered[df_filtered['MANUFACTURER']==FLTR_MANUFACTURER]
             if FLTR_MODEL:
-                # st.session_state.MODEL_ID = get_filter()['Id'].iloc[0]
-                # print(st.session_state.MODEL_ID)
-                # MODEL_ID = st.session_state.MODEL_ID
-                # st.rerun()
-                MODEL_ID = holder.text_input(label="✏️ ENTER MODEL Id", value=get_filter()['Id'].iloc[0], disabled=False)
+                df_filtered = df_filtered[df_filtered['MODEL']==FLTR_MODEL]
+            return df_filtered
 
-    if MODEL_ID:
-        SQL = SQL_MODEL(MODEL_ID, st.session_state['MODEL_COUNT'])
-        # print(SQL)
-        if SQL.count != 1:
-            st.session_state.DB_DATA = None
-            # st.session_state[MODEL_PROCEDURES] = pd.DataFrame([], columns=["PROCEDURE_ID"])
-            st.warning(f"< {MODEL_ID} > don't exits", icon="⚠️")
-        else:
-            CURRENT_MODEL = MODEL.TypeDict(**SQL.data[0])
-            CURRENT_DB = CURRENT_MODEL["DB"]
+        FLTR_DEVICE = st.selectbox("DEVICE TYPE", options=get_filter()['DEVICE_TYPE'].unique().tolist(), index=None)
+        FLTR_MANUFACTURER = st.selectbox("MANUFACTURER", options=sorted(get_filter()['MANUFACTURER'].unique().tolist()), index=None)
+        FLTR_MODEL = st.selectbox("MODEL", options=get_filter()['MODEL'].unique().tolist(), index=None)
 
-            ## SPECIFICATIONS
-            ## __________________________________________________________________________________________________
+        if FLTR_MODEL:
+            # st.session_state.MODEL_ID = get_filter()['Id'].iloc[0]
+            # print(st.session_state.MODEL_ID)
+            # MODEL_ID = st.session_state.MODEL_ID
+            # st.rerun()
+            MODEL_ID = holder.text_input(label="✏️ ENTER MODEL Id", value=get_filter()['Id'].iloc[0], disabled=False, label_visibility='collapsed')
 
-            st.text("") # SEPARATOR
-            st.markdown(''':blue-background[💊 SPECIFICATIONS:]''')
+if MODEL_ID:
+    SQL = SQL_MODEL(MODEL_ID, st.session_state['MODEL_COUNT'])
+    # print(SQL)
+    if SQL.count != 1:
+        st.session_state.DB_DATA = None
+        # st.session_state[MODEL_PROCEDURES] = pd.DataFrame([], columns=["PROCEDURE_ID"])
+        st.warning(f"< {MODEL_ID} > don't exits", icon="⚠️")
+    else:
+        CURRENT_MODEL = MODEL.TypeDict(**SQL.data[0])
+        CURRENT_DB = CURRENT_MODEL["DB"]
 
-            # print()
-            # print(type(CURRENT_DB))
-            # print(CURRENT_DB)
+        ## SPECIFICATIONS
+        ## __________________________________________________________________________________________________
 
-            ## DATA
-            if isinstance(CURRENT_DB, str):
-                try:
-                    st.session_state.DB_DATA = json.loads(CURRENT_DB)
-                except:
-                    st.session_state.DB_DATA = dict()
-            
-            elif isinstance(CURRENT_DB, dict):
-                st.session_state.DB_DATA = CURRENT_DB
-            
-            else:
+        st.text("") # SEPARATOR
+        st.markdown(''':blue-background[💊 SPECIFICATIONS:]''')
+
+        # print()
+        # print(type(CURRENT_DB))
+        # print(CURRENT_DB)
+
+        ## DATA
+        if isinstance(CURRENT_DB, str):
+            try:
+                st.session_state.DB_DATA = json.loads(CURRENT_DB)
+            except:
                 st.session_state.DB_DATA = dict()
+        
+        elif isinstance(CURRENT_DB, dict):
+            st.session_state.DB_DATA = CURRENT_DB
+        
+        else:
+            st.session_state.DB_DATA = dict()
 
-            # print()
-            # print(type(st.session_state[DB_DATA]))
-            # print(st.session_state[DB_DATA])
+        # print()
+        # print(type(st.session_state[DB_DATA]))
+        # print(st.session_state[DB_DATA])
 
-            if not st.session_state.DB_DATA.get('SPECIFICATIONS'):
-                st.session_state.DB_DATA['SPECIFICATIONS'] = dict()
-            
-            st.session_state.MODEL_PROCEDURES = pd.DataFrame(list(st.session_state.DB_DATA['SPECIFICATIONS'].keys()), columns=["PROCEDURE_ID"])
-            # st.session_state[MODEL_PROCEDURES] = pd.DataFrame(list(st.session_state[SPECIFICATIONS].keys()), columns=["PROCEDURE_ID"])
+        if not st.session_state.DB_DATA.get('SPECIFICATIONS'):
+            st.session_state.DB_DATA['SPECIFICATIONS'] = dict()
+        
+        st.session_state.MODEL_PROCEDURES = pd.DataFrame(list(st.session_state.DB_DATA['SPECIFICATIONS'].keys()), columns=["PROCEDURE_ID"])
+        # st.session_state[MODEL_PROCEDURES] = pd.DataFrame(list(st.session_state[SPECIFICATIONS].keys()), columns=["PROCEDURE_ID"])
 
-            ## PROCEDURES
+        ## PROCEDURES
 
-            col12, col22 = st.columns(2)
+        col12, col22 = st.columns(2)
 
-            with col12:
-                TBL_PROCEDURES, CURRENT_PROCEDURE = get_selected(st.session_state.MODEL_PROCEDURES, "")
+        with col12:
+            TBL_PROCEDURES, CURRENT_PROCEDURE = get_selected(st.session_state.MODEL_PROCEDURES, "")
 
-            with col22:
-                with st.popover(label=chr(8801)):
-                    with st.container(border=True):
-                        if SSTATE.PROCEDURES_COUNT not in st.session_state:
-                            st.session_state[SSTATE.PROCEDURES_COUNT] = 1
-                        procedure_Id = st.selectbox("PROCEDURE Id", options=[proc['Id'] for proc in SQL_PROCEDURES(st.session_state[SSTATE.PROCEDURES_COUNT])])
-                        if st.button(label='➕ INSERT PROCEDURE', use_container_width=True):
-                            if procedure_Id in list(st.session_state.DB_DATA['SPECIFICATIONS'].keys()):
-                                st.warning(f"< {procedure_Id} > It's already in the list", icon="⚠️")
-                            else:
-                                st.session_state.DB_DATA['SPECIFICATIONS'][procedure_Id] = {}
-                                INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
-                                st.toast("DATA DB UPDATE")
-                                sleep(2)
-                                st.rerun()
-
-                    if CURRENT_PROCEDURE and st.button("🗑️ DELETE PROCEDURE", use_container_width=True):
-                        @st.experimental_dialog(title="❓")
-                        def YESNO(info: str):
-                            st.text(info)
-                            col12, col22 = st.columns(2)
-                            with col12:
-                                if st.button("YES", use_container_width=True):
-                                    st.session_state.DB_DATA['SPECIFICATIONS'].pop(CURRENT_PROCEDURE)
-                                    INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
-                                    st.rerun()
-                            with col22:
-                                if st.button("NO", use_container_width=True):
-                                    st.rerun()
-                        
-                        YESNO(f"DO YOU WANT TO DELETE THIS PROCEDURE?\n< {CURRENT_PROCEDURE} >")
-
-            FUNC(CURRENT_PROCEDURE)
-
-            ## DB DATA JSON
-            ## __________________________________________________________________________________________________
-
-            st.text("") # SEPARATOR
-            st.text("") # SEPARATOR
-            st.markdown(''':blue-background[💊 DB DATA:]''')
-
-            col_1_8, col_8_8 = st.columns([7,1])
-
-            with col_1_8:
+        with col22:
+            with st.popover(label=chr(8801)):
                 with st.container(border=True):
-                    # DICT = st.session_state.current_model_db
-                    JSON = json.dumps(st.session_state.DB_DATA)
-                    st.json(JSON, expanded=False)
-            
-            with col_8_8:
-                with st.popover(label=chr(8801)):
-                    with st.container(border=True):
-                        FIELD = st.text_input("FIELD")
-                        TYPE_FIELD_VALUE = st.selectbox("DATA TYPE", options=["TEXT", "DECIMAL", "CHECK"])
-                        VALUE = st.text_input("VALUE")
+                    if SSTATE.PROCEDURES_COUNT not in st.session_state:
+                        st.session_state[SSTATE.PROCEDURES_COUNT] = 1
+                    procedure_Id = st.selectbox("PROCEDURE Id", options=[proc['Id'] for proc in SQL_PROCEDURES(st.session_state[SSTATE.PROCEDURES_COUNT])])
+                    if st.button(label='➕ INSERT PROCEDURE', use_container_width=True):
+                        if procedure_Id in list(st.session_state.DB_DATA['SPECIFICATIONS'].keys()):
+                            st.warning(f"< {procedure_Id} > It's already in the list", icon="⚠️")
+                        else:
+                            st.session_state.DB_DATA['SPECIFICATIONS'][procedure_Id] = {}
+                            INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
+                            st.toast("DATA DB UPDATE")
+                            sleep(2)
+                            st.rerun()
 
-                        st.text("") 
-                        if st.button("INSERT NEW FIELD ⤵️", use_container_width=True):
-                            try:
-                                match TYPE_FIELD_VALUE:
-                                    case "TEXT":
-                                        print("VALUE:", str(VALUE))
-                                    case "DECIMAL":
-                                        print("VALUE:", float(VALUE))
-                                    case "CHECK":
-                                        print("VALUE:", bool(VALUE))
-                                st.balloons()
-                            except:
-                                st.warning("Write a valid data")
-                
-                    with st.container(border=True): # "DELETE"
-                        st.selectbox("FIELD", options=list(st.session_state.DB_DATA.keys()))
-                        st.text("") 
-                        if st.button("DELETE FIELD", use_container_width=True):
-                            st.balloons()
+                if CURRENT_PROCEDURE and st.button("🗑️ DELETE PROCEDURE", use_container_width=True):
+                    @st.experimental_dialog(title="❓")
+                    def YESNO_int(info: str):
+                        st.text(info)
+                        col12, col22 = st.columns(2)
+                        with col12:
+                            if st.button("YES", use_container_width=True):
+                                st.session_state.DB_DATA['SPECIFICATIONS'].pop(CURRENT_PROCEDURE)
+                                INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
+                                st.rerun()
+                        with col22:
+                            if st.button("NO", use_container_width=True):
+                                st.rerun()
+                    
+                    YESNO_int(f"DO YOU WANT TO DELETE THIS PROCEDURE?\n< {CURRENT_PROCEDURE} >")
+
+        FUNC(CURRENT_PROCEDURE)
+
+        ## DB DATA JSON
+        ## __________________________________________________________________________________________________
+
+        st.text("") # SEPARATOR
+        st.text("") # SEPARATOR
+        st.markdown(''':blue-background[💊 DB DATA:]''')
+
+        col_1_8, col_8_8 = st.columns([7,1])
+
+        with col_1_8:
+            with st.container(border=True):
+                # DICT = st.session_state.current_model_db
+                JSON = json.dumps(st.session_state.DB_DATA)
+                st.json(JSON, expanded=False)
+        
+        with col_8_8:
+            with st.popover(label=chr(8801)):
+                NEW_ITEM = st.text_input("FIELD", label_visibility='collapsed')
+                if st.button("INSERT NEW FIELD ⤵️", use_container_width=True):
+                    print('AÑDIMOS:', NEW_ITEM)
+                    st.session_state.DB_DATA[NEW_ITEM] = None
+                    INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
+                    st.rerun()
+
+                ITEM_2EDIT = st.selectbox("FIELD", options=list(st.session_state.DB_DATA.keys()), label_visibility='collapsed')
+                @st.experimental_dialog(title="❓")
+                def EDIT_DATA():
+                    NEW_DATA = st.text_area("JSON")
+                    if st.button("CHECK", use_container_width=True):
+                        try:
+                            DATA = {ITEM_2EDIT: eval(NEW_DATA)}
+                            st.json(json.dumps(DATA))
+
+                        except:
+                            st.warning("Value not valid")
+                    if st.button("CONFIRM", use_container_width=True):
+                        print(eval(NEW_DATA))
+                        st.rerun()
+
+
+                if st.button("EDIT FIELD", use_container_width=True):
+                    EDIT_DATA()
+                on = st.toggle(f"🔒", value=True)
+
+                if st.button(f"{USUAL_ICONS.DELETE.value}DELETE FIELD", use_container_width=True, type='primary', disabled=on):
+                    print('BORRAMOS:', ITEM_2EDIT)
+                    # st.session_state.DB_DATA.pop(ITEM_2EDIT)
+                    # INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
+                    st.rerun()
+                # YESNOBOX(f"DO YOU WANT TO DELETE THIS ITEM?\n-> {FIELD_2DEL}", foo)
