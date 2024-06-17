@@ -34,7 +34,9 @@ if SSTATE.LOGIN_STATUS not in st.session_state:
 
 SIDEBAR()
 if st.session_state[SSTATE.LOGIN_STATUS]:
-    st.sidebar.page_link(r"pages/DATABASE.py", label="DATABASE", use_container_width=True) # , icon="🧬" / ":blue-background[DATABASE]"
+    # st.sidebar.page_link(r"pages/DATABASE.py", label="DATABASE", use_container_width=True) # , icon="🧬" / ":blue-background[DATABASE]"
+    if st.sidebar.button(label="DATABASE", use_container_width=True):
+        st.switch_page(r"pages/DATABASE.py")
     SB_EDITORS()
 
 

@@ -58,8 +58,20 @@ class DB:
         DESCRIPTION: str
         FIRM: str
 
+    @dataclass
+    class MODEL_DB:
+        RANGE: dict = None
+        PART_NUMBER: str = ""
+        SPECIFICATIONS: dict = None
+
+        def toJSON(self) -> str:
+            return json.dumps(asdict(self))
+
 ## DB QUERIES
 ## __________________________________________________________________________________________________
+
+def SQL_BY_ROW(TABLE: str, ID):
+    return execute_query(conn.table(TABLE).select('*').like("Id", ID)).data
 
 def SQL_ID_COUNT(TABLE: str, ID: str) -> int:
     return execute_query(conn.table(TABLE).select('*', count='exact').like("Id", ID)).count

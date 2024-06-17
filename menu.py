@@ -41,7 +41,7 @@ if SSTATE.LOGIN_STATUS not in st.session_state:
 
 path_resources = r"resources"
 
-class USUAL_ICONS(Enum):
+class USUAL_ICONS(Enum): # 🪪🧮
     HOME = "🏠"
     EXIT = "⛔"
     SAVE = "💾"
