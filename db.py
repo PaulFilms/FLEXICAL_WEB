@@ -10,6 +10,8 @@ FLEXICAL v3 | DB
 ## PYTHON LIBRARIES
 import os, json, sqlite3
 from dataclasses import dataclass, asdict, fields
+from enum import Enum
+from typing import TypedDict
 from time import sleep
 
 ## IMPORTED LIBRARIES
@@ -30,7 +32,31 @@ from menu import path_resources, SSTATE, GET_FIRM, USUAL_ICONS
 
 conn = st.connection("supabase", type=SupabaseConnection)
 
+class DB:
 
+    class TABLES(Enum):
+        COMPANIES = "COMPANIES"
+        DEVICE_TYPES = "DEVICE_TYPES"
+        MANUFACTURERS = "MANUFACTURERS"
+        MODELS = "MODELS"
+        DEVICES = "DEVICES"
+        PROCEDURES = "PROCEDURES"
+        TEMPLATES = "TEMPLATES"
+
+    class COMPANIES(TypedDict):
+        Id: str
+        FULL_NAME: str
+        COUNTRY: str
+        ADDRESS1: str
+        ADDRESS2: str
+        POST_CODE: str
+        WEB_LINK: str
+        FIRM: str
+
+    class DEVICE_TYPES(TypedDict):
+        Id: str
+        DESCRIPTION: str
+        FIRM: str
 
 ## DB QUERIES
 ## __________________________________________________________________________________________________

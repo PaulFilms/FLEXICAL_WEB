@@ -107,16 +107,18 @@ def LOGIN():
 def SIDEBAR():
     if st.session_state[SSTATE.LOGIN_STATUS]:
         with st.sidebar.popover(f"🌐 {st.session_state[SSTATE.LOGIN_STATUS]}", use_container_width=True):
-            if st.button(f"{USUAL_ICONS.EXIT.value} [Log out]", use_container_width=True, help="Logout"):
+            if st.button(f"{USUAL_ICONS.EXIT.value} [LOG OUT]", use_container_width=True, help="Logout"):
                 st.session_state[SSTATE.LOGIN_STATUS] = None
                 st.switch_page(r"app.py")
             if st.button("⚙️ PROFILE", use_container_width=True):
                 st.switch_page(r"pages/PROFILE.py")
+        st.sidebar.text("")
     else: 
         if st.sidebar.button("🙋‍♀️🙋‍♂️ LOGIN", use_container_width=True):
             LOGIN()
 
 def SB_EDITORS():
+    st.sidebar.text("")
     with st.sidebar.expander("__✏️ EDITORS__", expanded=True):
         st.text("")
         st.page_link(r"pages/MODELS.py", label="MODELS") # , icon="🚗"
