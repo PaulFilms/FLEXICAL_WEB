@@ -20,6 +20,8 @@ from db import SQL_MODELS, GET_LOCAL_DB, SQL_DEVICE_TYPES, SQL_SELECT_COLUMN
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
+st.session_state.page = 'PROFILE'
+
 if SSTATE.LOGIN_STATUS not in st.session_state:
     st.session_state[SSTATE.LOGIN_STATUS] = None
 
@@ -30,7 +32,7 @@ if SSTATE.LOGIN_STATUS not in st.session_state:
 
 SIDEBAR()
 # st.sidebar.divider()
-st.sidebar.page_link("app.py", label="HOME", icon="🏠")
+# st.sidebar.page_link("app.py", label="HOME", icon="🏠")
 
 
 

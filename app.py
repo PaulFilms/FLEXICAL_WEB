@@ -12,7 +12,7 @@ import os
 import streamlit as st
 
 ## INTERNAL
-from menu import path_resources, SSTATE, SIDEBAR, SB_EDITORS, USUAL_ICONS
+from menu import *
 
 st.set_page_config(
     page_title="FLEXICAL DEVELOPER",
@@ -22,22 +22,24 @@ st.set_page_config(
 )
 
 
+
+
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
-if SSTATE.LOGIN_STATUS not in st.session_state:
-    st.session_state[SSTATE.LOGIN_STATUS] = None
+if 'LOGIN_STATUS' not in st.session_state:
+    st.session_state.LOGIN_STATUS = None
 
 
 ## SIDEBAR
 ## __________________________________________________________________________________________________
 
 SIDEBAR()
-if st.session_state[SSTATE.LOGIN_STATUS]:
-    # st.sidebar.page_link(r"pages/DATABASE.py", label="DATABASE", use_container_width=True) # , icon="🧬" / ":blue-background[DATABASE]"
-    if st.sidebar.button(label="DATABASE", use_container_width=True):
-        st.switch_page(r"pages/DATABASE.py")
-    SB_EDITORS()
+# if st.session_state[SSTATE.LOGIN_STATUS]:
+#     # st.sidebar.page_link(r"pages/DATABASE.py", label="DATABASE", use_container_width=True) # , icon="🧬" / ":blue-background[DATABASE]"
+#     # if st.sidebar.button(label="DB ITEMS", use_container_width=True):
+#     #     st.switch_page(r"pages/DATABASE.py")
+#     SB_EDITORS()
 
 
 
@@ -51,7 +53,7 @@ st.image(os.path.join(path_resources, r"LOGO2.svg"), use_column_width=False) # f
 
 st.text("ABOUT FLEXICAL")
 with st.container(border=True):
-    st.caption('''This is a beta version of web application for FLEXICAL''')
+    st.caption('''This is a :red-background[beta version] of web application for FLEXICAL''')
     st.caption('''Any functionality may not run a well''')
     st.caption('''In case of troubles, please contact with: ppp@ppp.com''')
     st.markdown('''
@@ -88,7 +90,8 @@ with col22:
 
 st.divider()
 # st.text("DEVELOPED FOR R&S TO R&S")
-st.image(os.path.join(path_resources, r"R&S Logo - Complete.svg"), 
+st.image(
+    os.path.join(path_resources, r"R&S Logo - Complete.svg"), 
     # use_column_width=True,
     width=250
 )

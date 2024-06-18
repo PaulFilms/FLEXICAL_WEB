@@ -12,8 +12,8 @@ import streamlit as st
 import pandas as pd
 
 ## INTERNAL
-from menu import SSTATE, GET_FIRM, path_resources, SIDEBAR
-from db import conn, execute_query
+from menu import *
+from db import *
 
 
 ## MENU
@@ -30,10 +30,24 @@ from db import conn, execute_query
 ## __________________________________________________________________________________________________
 
 SIDEBAR()
-st.sidebar.divider()
+# st.sidebar.divider()
 
 
 ## PAGE
 ## __________________________________________________________________________________________________
 
-st.selectbox("TEMPLATE Id", options=[])
+st.text('TEMPLATE Id')
+
+col12, col22 = st.columns(2)
+
+with col12:
+    st.selectbox("TEMPLATE Id", options=SQL_SELECT_COLUMN("TEMPLATES", "Id"), index=None, label_visibility='collapsed')
+
+with col22:
+    with st.popover(USUAL_ICONS.EXPANDER.value):
+        FLTR_DEVICE = st.selectbox("DEVICE TYPE", options=SQL_SELECT_COLUMN("DEVICE_TYPES", "Id"), index=None)
+        FLTR_MANUFACTURER = st.selectbox("MANUFACTURER", options=SQL_SELECT_COLUMN("MANUFACTURERS", "Id"), index=None)
+        FLTR_MODEL = st.selectbox("MODEL", options=SQL_SELECT_COLUMN("MODELS", "Id"), index=None)
+
+
+# FOOTER("FLEXICAL | TEMPLATES EDITOR")

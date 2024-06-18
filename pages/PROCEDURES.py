@@ -13,22 +13,19 @@ import streamlit as st
 import pandas as pd
 
 ## INTERNAL
-from menu import USUAL_ICONS, SSTATE, GET_FIRM, path_resources, SIDEBAR, SB_EDITORS
-from db import conn, execute_query, SQL_PROCEDURES, SQL_INSERT, SQL_ID_COUNT, SQL_SELECT_COLUMN
+from menu import *
+from db import *
 
 
 
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
-if not st.session_state[SSTATE.LOGIN_STATUS]:
-    st.switch_page(r"pages/PROFILE.py")
+if 'LOGIN_STATUS' not in st.session_state:
+    st.session_state.LOGIN_STATUS = None
 
-# if SSTATE.LOGIN_STATUS not in st.session_state:
-#     st.session_state[SSTATE.LOGIN_STATUS] = None
-
-if SSTATE.PROCEDURES_COUNT not in st.session_state:
-    st.session_state[SSTATE.PROCEDURES_COUNT] = 1
+if 'PROCEDURES' not in st.session_state:
+    st.session_state.PROCEDURES = 1
 
 if 'DB_DATA' not in st.session_state:
     st.session_state.DB_DATA = None
@@ -38,6 +35,7 @@ if 'DB_DATA' not in st.session_state:
 ## __________________________________________________________________________________________________
 
 class PROCEDURE:
+    '''class'''
 
     class TypeDict(TypedDict):
         Id: str
@@ -47,117 +45,112 @@ class PROCEDURE:
         PYDATA: str
         FIRM: str
 
-# @st.experimental_dialog("NEW PROCEDURE FORM")
-# def FORM_NEWPROCEDURE():
-#     ID = st.text_input("Id *")
-#     TITLE = st.text_input("DEFALUT TEST TITLE *")
-#     INFO = st.text_area("INFO")
+def get_selected(DATAFRAME: pd.DataFrame) -> tuple[pd.DataFrame, str]:
+    df_with_selections = DATAFRAME.copy()
+    df_with_selections.insert(0, "✔️", False)
 
-#     if st.button(label="💽 CREATE NEW PROCEDURE", use_container_width=True):
-#         CHECK: bool = True
-#         if CHECK and (not ID or not TITLE or not INFO):
-#             st.warning(f"Complete all * fields", icon=USUAL_ICONS.WARNINNG.value)
-#             CHECK = False
-#         if SQL_ID_COUNT("PROCEDURES", ID):
-#             st.warning(f"< {ID} > is already in the DATABASE", icon="🚨")
-#             CHECK = False
-#         if CHECK:
-#             ## INSERT
-#             VALUES = {
-#                 "Id": ID.upper(), 
-#                 "TITLE": TITLE.upper(),
-#                 "INFO": INFO,
-#                 "FIRM": GET_FIRM()
-#             }
-#             SQL_INSERT("PROCEDURES", VALUES)
-#             st.session_state[SSTATE.PROCEDURES_COUNT] += 1
-#             st.info("New Procedure Added !!", icon='🏁')
-#             sleep(3)
-#             st.rerun()
+    # Get dataframe row-selections from user with st.data_editor
+    edited_df = st.data_editor(
+        df_with_selections,
+        hide_index=True,
+        column_config={
+            "✔️": st.column_config.CheckboxColumn(required=True, width='small'),
+            'DEVICE TYPE': st.column_config.TextColumn(required=True, width='large'),
+        },
+        disabled=DATAFRAME.columns,
+        use_container_width=True
+    )
 
-@st.cache_resource
-def SQL_PROCEDURE(PROCEDURE_ID: str, COUNT: int):
-    print(f"SQL MODEL DATA ({COUNT}):", GET_FIRM())
-    return execute_query(conn.table('PROCEDURES').select('*', count='exact').like("Id", PROCEDURE_ID))
+    # Filter the dataframe using the temporary column, then drop the column
+    selected_rows = edited_df[edited_df["✔️"]]
+    selected_rows.drop("✔️", axis=1)
 
+    STANDARD: str = None
+    if len(selected_rows) == 1:
+        STANDARD = selected_rows['DEVICE TYPE'].iloc[0]
 
-## SIDEBAR
-## __________________________________________________________________________________________________
-
-SIDEBAR()
-# st.sidebar.page_link("app.py", label="HOME", icon="🏠")
-if st.session_state[SSTATE.LOGIN_STATUS]:
-    st.sidebar.page_link("app.py", label="HOME", icon="🏠")
-    st.sidebar.page_link(r"pages/DATABASE.py", label="DATABASE", use_container_width=True) # , icon="🧬" / ":blue-background[DATABASE]"
-    SB_EDITORS()
-
+    return edited_df, STANDARD
 
 
 ## PAGE
 ## __________________________________________________________________________________________________
 
+if not st.session_state.LOGIN_STATUS:
+    st.switch_page("app.py")
+
 st.logo(os.path.join(path_resources, r"LOGO2.svg"))
 # st.image(os.path.join(path_resources, r"procedures.svg"), use_column_width=False)
 # st.divider()
 
-# tab_db, tab_editor = st.tabs(["📒 DATABASE", "✏️ EDITOR"])
+SIDEBAR()
 
-
-## DATABASE
-## __________________________________________________________________________________________________
-
-# with tab_db:
-
-#     if st.session_state[SSTATE.LOGIN_STATUS]:
-#         if st.button("💾 CREATE NEW PROCEDURE", use_container_width=True): # or sd_btn_new:
-#             FORM_NEWPROCEDURE()
-
-
-#     if st.session_state[SSTATE.LOGIN_STATUS]:
-
-#         st.text("") # SEPARATOR
-#         st.text("") # SEPARATOR
-#         st.subheader('DATABASE:', divider='blue')
-
-#         # st.sidebar.markdown("""
-#         # [➡️ DATABASE](#database)
-#         # """, unsafe_allow_html=True)
-
-#         placeholder = st.empty()
-#         if placeholder.button("🧬 LOAD DATABASE", use_container_width=True):
-#             with placeholder.expander("🧬 DATABASE", expanded=True):
-#                 SQL = SQL_PROCEDURES(st.session_state[SSTATE.PROCEDURES_COUNT])
-#                 DATAFRAME = pd.DataFrame(SQL)
-#                 del DATAFRAME["DB"]
-#                 del DATAFRAME["PYDATA"]
-#                 st.dataframe(
-#                     # data=pd.DataFrame(SQL),
-#                     data=DATAFRAME,
-#                     use_container_width=True,
-#                     hide_index=True
-#                 )
-
-
-## EDITOR
-## __________________________________________________________________________________________________
-
-# with tab_editor:
-
+st.text("PROCEDURE Id")
 col12, col22 = st.columns(2)
 
 with col12:
-    print(SQL_PROCEDURES(1))
-    PROCEDURE_ID = st.selectbox("🎛️ PROCEDURE Id", options=[procedure['Id'] for procedure in SQL_PROCEDURES(st.session_state[SSTATE.PROCEDURES_COUNT])], index=None)
+    # print(SQL_PROCEDURES(1))
+    PROCEDURE_ID = st.selectbox("🎛️ PROCEDURE Id", options=[procedure['Id'] for procedure in SQL_PROCEDURES(st.session_state.PROCEDURES)], index=None, label_visibility='collapsed')
 
 if PROCEDURE_ID:
-    SQL = SQL_PROCEDURE(PROCEDURE_ID, st.session_state[SSTATE.PROCEDURES_COUNT])
+    SQL = SQL_BY_ROW('PROCEDURES', PROCEDURE_ID)
 
-    if SQL.count != 1:
+    with col22:
+        if st.button("📄 SHOW DOCUMENT", use_container_width=True):
+            @st.experimental_dialog("📄 DOCUMENT", width='large')
+            def DOCUMENT():
+                MD = r'''
+                ## PROCEDURE Id
+                ---
+
+                Information about procedure
+
+
+                :blue-background[STANDARDS USED:]
+                - Standard 1
+                - Standard n
+
+                
+                :blue-background[UNCERTAINTY:]
+
+                $$
+                u = \sqrt{a^2 + b^2 + c^2}
+                $$
+
+                
+                :blue-background[CMC:]
+
+                | Column 1      | Column 2      |
+                | ------------- | ------------- |
+                | Cell 1, Row 1 | Cell 2, Row 1 |
+                | Cell 1, Row 2 | Cell 1, Row 2 |
+
+                
+                -
+                '''
+                st.button("PRINT DOCUMENT")
+                with st.container(border=True): # height=300, 
+                    st.markdown(MD, unsafe_allow_html=True)
+            DOCUMENT()
+
+    if len(SQL) != 1:
         st.session_state.DB_DATA = None
         st.warning(f"< {PROCEDURE_ID} > don't exits", icon="⚠️")
 
     else:
-        CURRENT_PROCEDURE = PROCEDURE.TypeDict(**SQL.data[0])
+        CURRENT_PROCEDURE = PROCEDURE.TypeDict(**SQL[0])
+        CURRENT_DB = CURRENT_PROCEDURE["DB"]
+        st.write(CURRENT_PROCEDURE)
+
+        ## DB DATA
+        if isinstance(CURRENT_DB, str):
+            try:
+                st.session_state.DB_DATA = json.loads(CURRENT_DB)
+            except:
+                st.session_state.DB_DATA = dict()
+        elif isinstance(CURRENT_DB, dict):
+            st.session_state.DB_DATA = CURRENT_DB
+        else:
+            st.session_state.DB_DATA = dict()
 
         ## DATA
         st.text("")
@@ -165,7 +158,7 @@ if PROCEDURE_ID:
         st.subheader('DATA:', divider='blue')
 
         tx_title = st.text_input(label='DEFAULT TEST TITLE', value=CURRENT_PROCEDURE["TITLE"])
-        tx_info = st.text_input(label='INFO', value=CURRENT_PROCEDURE["INFO"])
+        tx_info = st.text_area(label='INFO', value=CURRENT_PROCEDURE["INFO"])
 
 
         ## REPORT FORMATS
@@ -179,22 +172,46 @@ if PROCEDURE_ID:
         st.text("") # SEPARATOR
         st.markdown(''':blue-background[💊 STANDARDS:]''')
 
+        if not st.session_state.DB_DATA.get('STANDARDS'):
+            st.session_state.DB_DATA['STANDARDS'] = dict()
+
         col12, col22 = st.columns(2)
         
         with col12:
-            edited_df = st.data_editor(
-                pd.DataFrame(columns=["✔️", 'DEVICE TYPE']),
-                hide_index=True,
-                column_config={
-                    "✔️": st.column_config.CheckboxColumn(required=True, width='small'),
-                    'DEVICE TYPE': st.column_config.TextColumn(required=True, width='large'),
-                },
-                # disabled=DATAFRAME.columns,
-                use_container_width=True
-            )
+            PROCEDURE_STANDARDS = pd.DataFrame(list(st.session_state.DB_DATA['STANDARDS'].keys()), columns=["DEVICE TYPE"])
+            TBL_STANDARDS, CURRENT_STANDARD = get_selected(PROCEDURE_STANDARDS)
 
         with col22:
-            st.popover(label=chr(8801))
+            with st.popover(label=chr(8801)):
+                with st.container(border=True):
+                    if 'DEVICE_TYPES' not in st.session_state:
+                        st.session_state.DEVICE_TYPES = 1
+                    device_type = st.selectbox("DEVICE TYPE", options=SQL_SELECT_COLUMN("DEVICE_TYPES", "Id"))
+                    if st.button(label='➕ INSERT TYPE', use_container_width=True):
+                        if device_type in list(st.session_state.DB_DATA['STANDARDS'].keys()):
+                            st.warning(f"< {device_type} > It's already in the list", icon="⚠️")
+                        else:
+                            st.session_state.DB_DATA['STANDARDS'][device_type] = {}
+                            SQL_UPDATE_DB("PROCEDURES", PROCEDURE_ID, st.session_state.DB_DATA)
+                            st.toast("DATA DB UPDATE")
+                            sleep(2)
+                            st.rerun()
+
+                if CURRENT_STANDARD and st.button("🗑️ DELETE PROCEDURE", use_container_width=True):
+                    @st.experimental_dialog(title="❓")
+                    def YESNO_int(info: str):
+                        st.text(info)
+                        col12, col22 = st.columns(2)
+                        with col12:
+                            if st.button("YES", use_container_width=True):
+                                st.session_state.DB_DATA['SPECIFICATIONS'].pop(CURRENT_PROCEDURE)
+                                SQL_UPDATE_DB("PROCEDURES", PROCEDURE_ID, st.session_state.DB_DATA)
+                                st.rerun()
+                        with col22:
+                            if st.button("NO", use_container_width=True):
+                                st.rerun()
+                    
+                    YESNO_int(f"DO YOU WANT TO DELETE THIS STANDARD?\n< {CURRENT_PROCEDURE} >")
 
         st.text("") # SEPARATOR
         st.markdown(''':blue-background[💊 CMC:]''')

@@ -19,7 +19,7 @@ import streamlit as st
 from st_supabase_connection import SupabaseConnection, execute_query
 
 ## INTERNAL
-from menu import path_resources, SSTATE, GET_FIRM, USUAL_ICONS
+from menu import *
 
 
 ## DATACLASSES
@@ -118,6 +118,12 @@ def SQL_COMPANIES(COUNT: int):
     print(f"SQL DEVICES ({COUNT}):", GET_FIRM())
     SQL = execute_query(conn.table("DEVICES").select('*').order("Id"), ttl="10m")
     return SQL.data
+
+def SQL_UPDATE_DB(TABLE: str, ID, DB: dict) -> None:
+    execute_query(conn.table(TABLE).update({"DB": json.dumps(DB)}).eq("Id", ID), ttl=0)
+    if TABLE not in st.session_state:
+        st.session_state[TABLE] = 1
+    st.session_state[TABLE] += 1
 
 # CUSTOMERS_COUNT: str = "CUSTOMERS_COUNT"
 # if CUSTOMERS_COUNT not in st.session_state:

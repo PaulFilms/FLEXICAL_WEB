@@ -23,6 +23,8 @@ from pages.MODELS import MODEL
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
+st.session_state.page = 'DATABASE'
+
 if SSTATE.LOGIN_STATUS not in st.session_state:
     st.session_state.FORM_FIELDS = None
 
@@ -245,9 +247,9 @@ def SQL_TABLE(TABLE: str, COUNT: int):
 ## __________________________________________________________________________________________________
 
 SIDEBAR()
-st.sidebar.page_link("app.py", label="HOME", icon="🏠")
-if st.session_state[SSTATE.LOGIN_STATUS]:
-    SB_EDITORS()
+# st.sidebar.page_link("app.py", label="HOME", icon="🏠")
+# if st.session_state[SSTATE.LOGIN_STATUS]:
+#     SB_EDITORS()
 
 
 ## PAGE
@@ -307,4 +309,4 @@ if st.session_state.TABLE and st.session_state[SSTATE.LOGIN_STATUS]:
 
 ## ____________________________________________________________________________________________________________________________
 
-# st.write(dir(FORMS))
+# FOOTER("FLEXICAL | DB ITEMS")

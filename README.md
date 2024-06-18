@@ -5,6 +5,8 @@ Web framework to manage the main data of application
 
 ## TASK:
 - Complete LogIn Functions
+    * Sign Up form
+    * DB Users Table
 - Add Download Page
 - PAGE DATABASE:
     * Add Exports
@@ -12,6 +14,10 @@ Web framework to manage the main data of application
 - PAGE MODELS EDITOR:
     * Include Validation sliders in specifications
     * JSON Fields Incomplete
+- PAGE PROCEDURES EDITOR:
+    * CMC
+    * Finish PYDATA
+    * Re-Factorized Standards
 - LOCAL DB:
     * INSERT MultiRow
     * Check Last Change
