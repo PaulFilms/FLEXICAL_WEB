@@ -31,25 +31,16 @@ if 'LOGIN_STATUS' not in st.session_state:
     st.session_state.LOGIN_STATUS = None
 
 
-## SIDEBAR
-## __________________________________________________________________________________________________
-
-SIDEBAR()
-# if st.session_state[SSTATE.LOGIN_STATUS]:
-#     # st.sidebar.page_link(r"pages/DATABASE.py", label="DATABASE", use_container_width=True) # , icon="🧬" / ":blue-background[DATABASE]"
-#     # if st.sidebar.button(label="DB ITEMS", use_container_width=True):
-#     #     st.switch_page(r"pages/DATABASE.py")
-#     SB_EDITORS()
-
-
-
-
 ## PAGE
 ## __________________________________________________________________________________________________
 
+# if not st.session_state.LOGIN_STATUS:
+#     st.switch_page(r"pages/LOGIN.py")
+
+## SIDEBAR & BASIC COMPONENTS
 st.logo(os.path.join(path_resources, r"LOGO2.svg"))
 st.image(os.path.join(path_resources, r"LOGO2.svg"), use_column_width=False) # flexical_developer
-# st.divider()
+SIDEBAR()
 
 st.text("ABOUT FLEXICAL")
 with st.container(border=True):

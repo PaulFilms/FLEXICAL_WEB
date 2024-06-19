@@ -4,6 +4,7 @@ FLEXICAL v3 | DB
 `SUPABASE INFO:`
     pip install st-supabase-connection
     https://docs.streamlit.io/develop/tutorials/databases/supabase
+    https://github.com/SiddhantSadangi/st_supabase_connection
 
 '''
 
@@ -22,15 +23,15 @@ from st_supabase_connection import SupabaseConnection, execute_query
 from menu import *
 
 
-## DATACLASSES
-## __________________________________________________________________________________________________
-
-
-
 ## DB CONNECTION
 ## __________________________________________________________________________________________________
 
 conn = st.connection("supabase", type=SupabaseConnection)
+
+
+
+## DATACLASSES
+## __________________________________________________________________________________________________
 
 class DB:
 
@@ -70,8 +71,8 @@ class DB:
 ## DB QUERIES
 ## __________________________________________________________________________________________________
 
-def SQL_BY_ROW(TABLE: str, ID):
-    return execute_query(conn.table(TABLE).select('*').like("Id", ID)).data
+def SQL_BY_ROW(TABLE: str, FIELD: str, VALUE):
+    return execute_query(conn.table(TABLE).select('*').eq(FIELD, VALUE)).data
 
 def SQL_ID_COUNT(TABLE: str, ID: str) -> int:
     return execute_query(conn.table(TABLE).select('*', count='exact').like("Id", ID)).count
@@ -125,41 +126,12 @@ def SQL_UPDATE_DB(TABLE: str, ID, DB: dict) -> None:
         st.session_state[TABLE] = 1
     st.session_state[TABLE] += 1
 
-# CUSTOMERS_COUNT: str = "CUSTOMERS_COUNT"
-# if CUSTOMERS_COUNT not in st.session_state:
-#     st.session_state[CUSTOMERS_COUNT] = 1
-
 @st.cache_resource
 def SQL_CUSTOMERS(COUNT: int):
     print(f"SQL CUSTOMERS ({COUNT}):", GET_FIRM())
     SQL = execute_query(conn.table("CUSTOMERS").select('*').order("Id"), ttl="10m")
     return SQL.data
 
-# def get_local_db():
-#     conn_sqlite = sqlite3.connect("mydatabase.db")
-#     cur_sqlite = conn_sqlite.cursor()
-#     # create a table in the SQLite database
-#     cur_sqlite.execute("""
-#         CREATE TABLE MODELS (
-#             Id TEXT PRIMARY KEY,
-#             MODEL TEXT,
-#             MANUFACTURER INTEGER,
-#             DEVICE_TYPE TEXT,
-#             DESCRIPTION TEXT,
-#             INFO TEXT,
-#             DB BLOB,
-#             FIRM TEXT
-#         );
-#     """)
-#     for e in SQL_MODELS(0):
-#         # print(e)
-#         SQL = f"""INSERT INTO MODELS ('Id', 'MODEL', 'MANUFACTURER', 'DEVICE_TYPE', 'DESCRIPTION', 'INFO', 'DB', 'FIRM') VALUES ('{e['Id']}', '{e['MODEL']}', '{e['MANUFACTURER']}', '{e['DEVICE_TYPE']}', '{e['DESCRIPTION']}', '{e['INFO']}', '{e['DB']}', '{e['FIRM']}');"""
-#         cur_sqlite.execute(SQL)
-#     conn_sqlite.commit()
-#     cur_sqlite.close()
-#     conn_sqlite.close()
-
-# get_local_db()
 
 def GET_LOCAL_DB() -> None:
     path_file = "flexical.db"

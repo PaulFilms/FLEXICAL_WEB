@@ -12,32 +12,28 @@ import streamlit as st
 import pandas as pd
 
 ## INTERNAL
-from menu import SSTATE, SIDEBAR, USUAL_ICONS
-from db import SQL_MODELS, GET_LOCAL_DB, SQL_DEVICE_TYPES, SQL_SELECT_COLUMN
+from menu import *
+from db import *
 
 
 
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
-st.session_state.page = 'PROFILE'
-
-if SSTATE.LOGIN_STATUS not in st.session_state:
-    st.session_state[SSTATE.LOGIN_STATUS] = None
-
-
-
-## SIDEBAR
-## __________________________________________________________________________________________________
-
-SIDEBAR()
-# st.sidebar.divider()
-# st.sidebar.page_link("app.py", label="HOME", icon="🏠")
+if 'LOGIN_STATUS' not in st.session_state:
+    st.session_state.LOGIN_STATUS = None
 
 
 
 ## PAGE
 ## __________________________________________________________________________________________________
+
+# if not st.session_state.LOGIN_STATUS:
+#     st.switch_page(r"pages/LOGIN.py")
+
+## SIDEBAR & BASIC COMPONENTS
+st.logo(os.path.join(path_resources, r"LOGO2.svg"))
+SIDEBAR()
 
 # col13, col23, col33 = st.columns(3)
 
@@ -55,7 +51,7 @@ col12, col22 = st.columns(2)
 
 with col12:
 
-    if st.session_state[SSTATE.LOGIN_STATUS]:
+    if st.session_state.LOGIN_STATUS:
         with st.expander(USUAL_ICONS.EXPANDER.value + "   OPTIONS", expanded=True):
             text_contents = '''This is some text'''
             st.download_button(USUAL_ICONS.SAVE.value + " DOWNLOAD DESKTOP APP", text_contents, use_container_width=True)

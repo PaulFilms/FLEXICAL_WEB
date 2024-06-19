@@ -23,18 +23,19 @@ from db import *
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
-# if not st.session_state[SSTATE.LOGIN_STATUS]:
-#     st.switch_page(r"pages/PROFILE.py")
-
-## SIDEBAR
-## __________________________________________________________________________________________________
-
-SIDEBAR()
-# st.sidebar.divider()
+if 'LOGIN_STATUS' not in st.session_state:
+    st.session_state.LOGIN_STATUS = None
 
 
 ## PAGE
 ## __________________________________________________________________________________________________
+
+# if not st.session_state.LOGIN_STATUS:
+#     st.switch_page(r"pages/LOGIN.py")
+
+## SIDEBAR & BASIC COMPONENTS
+st.logo(os.path.join(path_resources, r"LOGO2.svg"))
+SIDEBAR()
 
 st.text('TEMPLATE Id')
 

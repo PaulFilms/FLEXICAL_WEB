@@ -23,13 +23,8 @@ from pages.MODELS import MODEL
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
-st.session_state.page = 'DATABASE'
-
-if SSTATE.LOGIN_STATUS not in st.session_state:
-    st.session_state.FORM_FIELDS = None
-
-if not st.session_state[SSTATE.LOGIN_STATUS]:
-    st.switch_page(r"pages/PROFILE.py")
+if 'LOGIN_STATUS' not in st.session_state:
+    st.session_state.LOGIN_STATUS = None
 
 if "TABLE" not in st.session_state: 
     st.session_state.TABLE = None
@@ -48,10 +43,6 @@ if 'FORM_BTN' not in st.session_state:
 T = TypeVar('T', bound=Union[st.checkbox, st.text_input, st.text_area, st.selectbox])
 
 class FORMS:
-    # class FIELDS(Enum):
-    #     TEXT = st.text
-    #     INFO = st.text_area
-    #     SELECT = st.selectbox
     
     @dataclass
     class FIELD():
@@ -89,15 +80,15 @@ class FORMS:
                 if st.session_state.FORM_FIELDS[field.LABEL] == 0.0:
                     ERROR = 1
                 if ERROR == 1:
-                    st.warning(f"Complete all * fields", icon="⚠️")
+                    INFOBOX(f"Complete all * fields")
                     return False
         ## CHECK Id
         if st.session_state.FORM_FIELDS.get("Id"):
             if SQL_ID_COUNT(st.session_state.TABLE, st.session_state.FORM_FIELDS['Id']):
-                st.warning(f"< {st.session_state.FORM_FIELDS['Id']} > is already in the DATABASE", icon="🚨")
+                INFOBOX(f"< {st.session_state.FORM_FIELDS['Id']} > is already in the DATABASE")
                 return False
         else:
-            st.warning(f"Id field is empty", icon="⚠️")
+            INFOBOX(f"Id field is empty")
             return False
         ## ALL CHECKED
         return True
@@ -172,7 +163,7 @@ class FORMS:
         FORMS._GET_FIELDS(FIELDS)
         if st.session_state.FORM_BTN:
             st.session_state.FORM_FIELDS['MODEL'] = st.session_state.FORM_FIELDS['MODEL'].upper()
-            DIMINUTIVE = SQL_BY_ROW("MANUFACTURERS", st.session_state.FORM_FIELDS['MANUFACTURER'])[0]['DIMINUTIVE']
+            DIMINUTIVE = SQL_BY_ROW("MANUFACTURERS", 'Id', st.session_state.FORM_FIELDS['MANUFACTURER'])[0]['DIMINUTIVE']
             st.session_state.FORM_FIELDS['Id'] = f"{DIMINUTIVE}_{st.session_state.FORM_FIELDS['MODEL']}".replace(chr(32), str()).upper()
             st.session_state.FORM_FIELDS['DESCRIPTION'] = st.session_state.FORM_FIELDS.pop('DESCRIPTION (information described on the device)')
             if FORMS._CHECK(FIELDS):
@@ -198,9 +189,6 @@ class FORMS:
 
     @st.experimental_dialog("📄 NEW PROCEDURE")
     def PROCEDURES():
-        # ID = st.text_input("Id *")
-        # TITLE = st.text_input("DEFALUT TEST TITLE *")
-        # INFO = st.text_area("INFO")
         FIELDS = [
             FORMS.FIELD("Id", "", st.text_input, False),
             FORMS.FIELD("DEFAULT TEST TITLE", "", st.text_input, True),
@@ -224,13 +212,8 @@ class FORMS:
         FORMS._GET_FIELDS(FIELDS)
         if st.session_state.FORM_BTN:
             st.session_state.FORM_FIELDS['Id'] = f"{st.session_state.FORM_FIELDS['MODEL_ID']}_{st.session_state.FORM_FIELDS['VERSION']}".replace(chr(32), str()).upper()
-            # st.session_state.FORM_FIELDS['COMPANY_ID'] = st.session_state.FORM_FIELDS.pop('CUSTOMER')
             if FORMS._CHECK(FIELDS):
                 FORMS._INSERT(st.session_state.TABLE, st.session_state.FORM_FIELDS)
-                # print(st.session_state.FORM_FIELDS)
-
-
-
 
 
 @st.cache_resource
@@ -241,22 +224,15 @@ def SQL_TABLE(TABLE: str, COUNT: int):
 
 
 
-
-
-## SIDEBAR
-## __________________________________________________________________________________________________
-
-SIDEBAR()
-# st.sidebar.page_link("app.py", label="HOME", icon="🏠")
-# if st.session_state[SSTATE.LOGIN_STATUS]:
-#     SB_EDITORS()
-
-
 ## PAGE
 ## __________________________________________________________________________________________________
 
+# if not st.session_state.LOGIN_STATUS:
+#     st.switch_page(r"pages/LOGIN.py")
+
+## SIDEBAR & BASIC COMPONENTS
 st.logo(os.path.join(path_resources, r"LOGO2.svg"))
-# st.image(os.path.join(path_resources, r"LOGO2.svg"), use_column_width=False) # flexical_developer
+SIDEBAR()
 
 st.text("✏️ SELECT TABLE")
 
@@ -268,17 +244,17 @@ with col12:
 with col22:
     if st.button("💾 CREATE NEW ITEM", use_container_width=True):
         if not st.session_state.TABLE:
-            st.warning("Please!! Select a valid Table", icon=USUAL_ICONS.WARNINNG.value)
+            INFOBOX("Please!! Select a valid Table")
         else:
             if st.session_state.TABLE not in dir(FORMS):
-                st.warning("This form is not available yet", icon="⚠️")
+                INFOBOX("This form is not available yet")
             else:
                 form = getattr(FORMS, st.session_state.TABLE)
                 form()
 
 
 ## LOAD DATABASE
-if st.session_state.TABLE and st.session_state[SSTATE.LOGIN_STATUS]:
+if st.session_state.TABLE and st.session_state.LOGIN_STATUS:
 
     st.text("") # SEPARATOR
     st.text("") # SEPARATOR

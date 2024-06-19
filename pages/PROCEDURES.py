@@ -45,43 +45,52 @@ class PROCEDURE:
         PYDATA: str
         FIRM: str
 
-def get_selected(DATAFRAME: pd.DataFrame) -> tuple[pd.DataFrame, str]:
-    df_with_selections = DATAFRAME.copy()
-    df_with_selections.insert(0, "✔️", False)
+tbl_cmc_config={
+    'RANGE1_MIN': st.column_config.NumberColumn(default=0.0),
+    'RANGE1_MAX': st.column_config.NumberColumn(default=0.0),
+    'RANGE2_MIN': st.column_config.NumberColumn(default=None),
+    'RANGE2_MAX': st.column_config.NumberColumn(default=None),
+    'EVALUATION': st.column_config.TextColumn(default="-"),
+    'C1': st.column_config.NumberColumn(format="%.2e", default=None), # 0.0
+    'C2': st.column_config.NumberColumn(format="%.2e", default=None), # 0.0
+    'C3': st.column_config.NumberColumn(format="%.2e", default=None), # 0.0
+}
 
-    # Get dataframe row-selections from user with st.data_editor
-    edited_df = st.data_editor(
-        df_with_selections,
-        hide_index=True,
-        column_config={
-            "✔️": st.column_config.CheckboxColumn(required=True, width='small'),
-            'DEVICE TYPE': st.column_config.TextColumn(required=True, width='large'),
-        },
-        disabled=DATAFRAME.columns,
-        use_container_width=True
-    )
+# def get_selected(DATAFRAME: pd.DataFrame) -> tuple[pd.DataFrame, str]:
+#     df_with_selections = DATAFRAME.copy()
+#     df_with_selections.insert(0, "✔️", False)
 
-    # Filter the dataframe using the temporary column, then drop the column
-    selected_rows = edited_df[edited_df["✔️"]]
-    selected_rows.drop("✔️", axis=1)
+#     # Get dataframe row-selections from user with st.data_editor
+#     edited_df = st.data_editor(
+#         df_with_selections,
+#         hide_index=True,
+#         column_config={
+#             "✔️": st.column_config.CheckboxColumn(required=True, width='small'),
+#             'DEVICE TYPE': st.column_config.TextColumn(required=True, width='large'),
+#         },
+#         disabled=DATAFRAME.columns,
+#         use_container_width=True
+#     )
 
-    STANDARD: str = None
-    if len(selected_rows) == 1:
-        STANDARD = selected_rows['DEVICE TYPE'].iloc[0]
+#     # Filter the dataframe using the temporary column, then drop the column
+#     selected_rows = edited_df[edited_df["✔️"]]
+#     selected_rows.drop("✔️", axis=1)
 
-    return edited_df, STANDARD
+#     STANDARD: str = None
+#     if len(selected_rows) == 1:
+#         STANDARD = selected_rows['DEVICE TYPE'].iloc[0]
+
+#     return edited_df, STANDARD
 
 
 ## PAGE
 ## __________________________________________________________________________________________________
 
-if not st.session_state.LOGIN_STATUS:
-    st.switch_page("app.py")
+# if not st.session_state.LOGIN_STATUS:
+#     st.switch_page(r"app.py")
 
+## SIDEBAR & BASIC COMPONENTS
 st.logo(os.path.join(path_resources, r"LOGO2.svg"))
-# st.image(os.path.join(path_resources, r"procedures.svg"), use_column_width=False)
-# st.divider()
-
 SIDEBAR()
 
 st.text("PROCEDURE Id")
@@ -92,7 +101,7 @@ with col12:
     PROCEDURE_ID = st.selectbox("🎛️ PROCEDURE Id", options=[procedure['Id'] for procedure in SQL_PROCEDURES(st.session_state.PROCEDURES)], index=None, label_visibility='collapsed')
 
 if PROCEDURE_ID:
-    SQL = SQL_BY_ROW('PROCEDURES', PROCEDURE_ID)
+    SQL = SQL_BY_ROW('PROCEDURES', "Id", PROCEDURE_ID)
 
     with col22:
         if st.button("📄 SHOW DOCUMENT", use_container_width=True):
@@ -134,7 +143,7 @@ if PROCEDURE_ID:
 
     if len(SQL) != 1:
         st.session_state.DB_DATA = None
-        st.warning(f"< {PROCEDURE_ID} > don't exits", icon="⚠️")
+        INFOBOX(f"< {PROCEDURE_ID} > don't exits")
 
     else:
         CURRENT_PROCEDURE = PROCEDURE.TypeDict(**SQL[0])
@@ -153,6 +162,8 @@ if PROCEDURE_ID:
             st.session_state.DB_DATA = dict()
 
         ## DATA
+        ## __________________________________________________________________________________________________
+
         st.text("")
         st.text("")
         st.subheader('DATA:', divider='blue')
@@ -161,13 +172,22 @@ if PROCEDURE_ID:
         tx_info = st.text_area(label='INFO', value=CURRENT_PROCEDURE["INFO"])
 
 
+
         ## REPORT FORMATS
+        ## __________________________________________________________________________________________________
+
         st.text("")
         st.text("")
         st.subheader('REPORT FORMATS:', divider='blue')
 
         st.text("") # SEPARATOR
         st.markdown(''':blue-background[💊 REPORT FORMATS:]''')
+
+        st.text("REPORT FORMATS")
+
+
+        ## STANDARDS
+        ## __________________________________________________________________________________________________
 
         st.text("") # SEPARATOR
         st.markdown(''':blue-background[💊 STANDARDS:]''')
@@ -179,7 +199,7 @@ if PROCEDURE_ID:
         
         with col12:
             PROCEDURE_STANDARDS = pd.DataFrame(list(st.session_state.DB_DATA['STANDARDS'].keys()), columns=["DEVICE TYPE"])
-            TBL_STANDARDS, CURRENT_STANDARD = get_selected(PROCEDURE_STANDARDS)
+            TBL_STANDARDS, CURRENT_STANDARD = DATAFRAME_LIST(PROCEDURE_STANDARDS, "DEVICE TYPE")
 
         with col22:
             with st.popover(label=chr(8801)):
@@ -189,7 +209,7 @@ if PROCEDURE_ID:
                     device_type = st.selectbox("DEVICE TYPE", options=SQL_SELECT_COLUMN("DEVICE_TYPES", "Id"))
                     if st.button(label='➕ INSERT TYPE', use_container_width=True):
                         if device_type in list(st.session_state.DB_DATA['STANDARDS'].keys()):
-                            st.warning(f"< {device_type} > It's already in the list", icon="⚠️")
+                            INFOBOX(f"< {device_type} > It's already in the list")
                         else:
                             st.session_state.DB_DATA['STANDARDS'][device_type] = {}
                             SQL_UPDATE_DB("PROCEDURES", PROCEDURE_ID, st.session_state.DB_DATA)
@@ -204,7 +224,7 @@ if PROCEDURE_ID:
                         col12, col22 = st.columns(2)
                         with col12:
                             if st.button("YES", use_container_width=True):
-                                st.session_state.DB_DATA['SPECIFICATIONS'].pop(CURRENT_PROCEDURE)
+                                st.session_state.DB_DATA['STANDARDS'].pop(CURRENT_STANDARD)
                                 SQL_UPDATE_DB("PROCEDURES", PROCEDURE_ID, st.session_state.DB_DATA)
                                 st.rerun()
                         with col22:
@@ -213,39 +233,36 @@ if PROCEDURE_ID:
                     
                     YESNO_int(f"DO YOU WANT TO DELETE THIS STANDARD?\n< {CURRENT_PROCEDURE} >")
 
+
+
+        ## CMC
+        ## __________________________________________________________________________________________________
+
         st.text("") # SEPARATOR
         st.markdown(''':blue-background[💊 CMC:]''')
 
-        column_config={
-            'RANGE1_MIN': st.column_config.NumberColumn(default=0.0),
-            'RANGE1_MAX': st.column_config.NumberColumn(default=0.0),
-            'RANGE2_MIN': st.column_config.NumberColumn(default=None),
-            'RANGE2_MAX': st.column_config.NumberColumn(default=None),
-            'EVALUATION': st.column_config.TextColumn(default="-"),
-            'C1': st.column_config.NumberColumn(format="%.2e", default=None), # 0.0
-            'C2': st.column_config.NumberColumn(format="%.2e", default=None), # 0.0
-            'C3': st.column_config.NumberColumn(format="%.2e", default=None), # 0.0
-        }
+        if not st.session_state.DB_DATA.get('CMC'):
+            st.session_state.DB_DATA['CMC'] = dict()
 
-        DF = pd.DataFrame(columns=list(column_config.keys()))
-        TBL_DATA = st.data_editor(
+
+
+        DF = pd.DataFrame(st.session_state.DB_DATA['CMC'], columns=list(tbl_cmc_config.keys()))
+        DF['EVALUATION'] = DF['EVALUATION'].astype(str)
+        DF = DF.reset_index()
+        del DF['index']
+
+        TBL_CMC = st.data_editor(
             DF,
             hide_index=True,
             num_rows='dynamic',
-            column_config={
-                'RANGE1_MIN': st.column_config.NumberColumn(default=0.0),
-                'RANGE1_MAX': st.column_config.NumberColumn(default=0.0),
-                'RANGE2_MIN': st.column_config.NumberColumn(default=None),
-                'RANGE2_MAX': st.column_config.NumberColumn(default=None),
-                'EVALUATION': st.column_config.TextColumn(default="-"),
-                'C1': st.column_config.NumberColumn(format="%.2e", default=0.0),
-                'C2': st.column_config.NumberColumn(format="%.2e", default=0.0),
-                'C3': st.column_config.NumberColumn(format="%.2e", default=0.0),
-            },
+            column_config=tbl_cmc_config,
             use_container_width=True
         )
 
-        st.write(CURRENT_PROCEDURE["DB"])
+        if st.button(USUAL_ICONS.UPDATE.value + " UPDATE"):
+            st.write(TBL_CMC)
+
+        # st.write(st.session_state.DB_DATA)
 
         ## PYDATA
         st.text("")

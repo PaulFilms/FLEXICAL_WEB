@@ -82,7 +82,7 @@ def INFO(TEXT: str):
         if INFOMD != CURRENT_MODEL["INFO"]:
             if st.button(USUAL_ICONS.UPDATE.value + " UPDATE INFO"):
                 execute_query(conn.table("MODELS").update({"INFO": INFOMD}).eq("Id", MODEL_ID), ttl=0)
-                st.session_state.MODEL += 1
+                st.session_state.MODELS += 1
                 st.toast("INFO Updated")
 
 @st.cache_resource
@@ -94,31 +94,31 @@ def SQL_MODEL(MODEL_ID: str, COUNT: int):
 #     execute_query(conn.table("MODELS").update({"DB": json.dumps(DB)}).eq("Id", MODEL_ID), ttl=0)
 #     st.session_state.MODEL += 1
 
-def get_selected(DATAFRAME: pd.DataFrame, COLUMN: str) -> tuple[pd.DataFrame, str]:
-    df_with_selections = DATAFRAME.copy()
-    df_with_selections.insert(0, "✔️", False)
+# def get_selected(DATAFRAME: pd.DataFrame, COLUMN: str) -> tuple[pd.DataFrame, str]:
+#     df_with_selections = DATAFRAME.copy()
+#     df_with_selections.insert(0, "✔️", False)
 
-    # Get dataframe row-selections from user with st.data_editor
-    edited_df = st.data_editor(
-        df_with_selections,
-        hide_index=True,
-        column_config={
-            "✔️": st.column_config.CheckboxColumn(required=True, width='small'),
-            'PROCEDURE_ID': st.column_config.TextColumn(required=True, width='large'),
-        },
-        disabled=DATAFRAME.columns,
-        use_container_width=True
-    )
+#     # Get dataframe row-selections from user with st.data_editor
+#     edited_df = st.data_editor(
+#         df_with_selections,
+#         hide_index=True,
+#         column_config={
+#             "✔️": st.column_config.CheckboxColumn(required=True, width='small'),
+#             'PROCEDURE_ID': st.column_config.TextColumn(required=True, width='large'),
+#         },
+#         disabled=DATAFRAME.columns,
+#         use_container_width=True
+#     )
 
-    # Filter the dataframe using the temporary column, then drop the column
-    selected_rows = edited_df[edited_df["✔️"]]
-    selected_rows.drop("✔️", axis=1)
+#     # Filter the dataframe using the temporary column, then drop the column
+#     selected_rows = edited_df[edited_df["✔️"]]
+#     selected_rows.drop("✔️", axis=1)
 
-    PROCEDURE: str = None
-    if len(selected_rows) == 1:
-        PROCEDURE = selected_rows['PROCEDURE_ID'].iloc[0]
+#     PROCEDURE: str = None
+#     if len(selected_rows) == 1:
+#         PROCEDURE = selected_rows['PROCEDURE_ID'].iloc[0]
 
-    return edited_df, PROCEDURE
+#     return edited_df, PROCEDURE
 
 def FUNC(CURRENT_PROCEDURE: str):
     if CURRENT_PROCEDURE:
@@ -139,9 +139,9 @@ def FUNC(CURRENT_PROCEDURE: str):
         try:
             col13, col23, col33 = st.columns(3)
             with col13:
-                VALUE1 = st.number_input("VALUE1", min_value=TBL_DATA['RANGE1_MIN'].min(), max_value=TBL_DATA['RANGE1_MAX'].max(), label_visibility='collapsed', step=0.001)
+                VALUE1 = st.number_input("VALUE1", min_value=TBL_DATA['RANGE1_MIN'].min(), max_value=TBL_DATA['RANGE1_MAX'].max(), label_visibility='collapsed', step=0.0001)
             with col23:
-                VALUE2 = st.number_input("VALUE2", min_value=TBL_DATA['RANGE2_MIN'].min(), max_value=TBL_DATA['RANGE2_MAX'].max(), label_visibility='collapsed', step=0.001)
+                VALUE2 = st.number_input("VALUE2", min_value=TBL_DATA['RANGE2_MIN'].min(), max_value=TBL_DATA['RANGE2_MAX'].max(), label_visibility='collapsed', step=0.0001)
             with col33:
                 VALUE = TABLE_DATA.GET_VALUE(TBL_DATA, VALUE1, VALUE2)
                 if VALUE:
@@ -159,6 +159,7 @@ def FUNC(CURRENT_PROCEDURE: str):
             else:
                 st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = TBL_DATA.to_dict()
             # INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
+            print(st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE])
             SQL_UPDATE_DB("MODELS", MODEL_ID, st.session_state.DB_DATA)
             st.rerun()
 
@@ -167,10 +168,10 @@ def FUNC(CURRENT_PROCEDURE: str):
 ## __________________________________________________________________________________________________
 
 if not st.session_state.LOGIN_STATUS:
-    st.switch_page("app.py")
+    st.switch_page(r"pages/LOGIN.py")
 
+## SIDEBAR & BASIC COMPONENTS
 st.logo(os.path.join(path_resources, r"LOGO2.svg"))
-
 SIDEBAR()
 
 st.text('✏️ SELECT MODEL Id')
@@ -212,9 +213,9 @@ with col22:
             MODEL_ID = holder_model.text_input(label="✏️ ENTER MODEL Id", value=get_filter()['Id'].iloc[0], disabled=False, label_visibility='collapsed')
 
 if MODEL_ID:
-    if "MODEL" not in st.session_state:
-        st.session_state.MODEL = 1
-    SQL = SQL_MODEL(MODEL_ID, st.session_state.MODEL)
+    # if "MODEL" not in st.session_state:
+    #     st.session_state.MODEL = 1
+    SQL = SQL_MODEL(MODEL_ID, st.session_state.MODELS)
     # print(SQL)
     if SQL.count != 1:
         CURRENT_MODEL = None
@@ -253,14 +254,16 @@ if MODEL_ID:
         if not st.session_state.DB_DATA.get('SPECIFICATIONS'):
             st.session_state.DB_DATA['SPECIFICATIONS'] = dict()
         
-        st.session_state.MODEL_PROCEDURES = pd.DataFrame(list(st.session_state.DB_DATA['SPECIFICATIONS'].keys()), columns=["PROCEDURE_ID"])
 
         ## PROCEDURES
 
         col12, col22 = st.columns(2)
 
         with col12:
-            TBL_PROCEDURES, CURRENT_PROCEDURE = get_selected(st.session_state.MODEL_PROCEDURES, "")
+            # st.session_state.MODEL_PROCEDURES = pd.DataFrame(list(st.session_state.DB_DATA['SPECIFICATIONS'].keys()), columns=["PROCEDURE_ID"])
+            COLUMN_NAME = "PROCEDURE Id"
+            MODEL_PROCEDURES = pd.DataFrame(list(st.session_state.DB_DATA['SPECIFICATIONS'].keys()), columns=[COLUMN_NAME])
+            TBL_PROCEDURES, CURRENT_PROCEDURE = DATAFRAME_LIST(MODEL_PROCEDURES, COLUMN_NAME) # st.session_state.MODEL_PROCEDURES
 
         with col22:
             with st.popover(label=chr(8801)):

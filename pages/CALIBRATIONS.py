@@ -4,7 +4,6 @@ FLEXICAL v3 | CALIBRATIONS
 '''
 
 ## PYTHON LIBRARIES
-pass
 
 ## IMPORTED LIBRARIES
 import streamlit as st
@@ -13,20 +12,39 @@ import streamlit as st
 from menu import *
 from db import *
 
+
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
 
-## SIDEBAR
+
+
+
+## SESSION STATES
 ## __________________________________________________________________________________________________
 
-SIDEBAR()
+if 'LOGIN_STATUS' not in st.session_state:
+    st.session_state.LOGIN_STATUS = None
+
 
 
 ## PAGE
 ## __________________________________________________________________________________________________
 
-st.title("✏️ CALIBRATION EDITOR")
+st.logo(os.path.join(path_resources, r"LOGO2.svg"))
+SIDEBAR()
+
+st.text('✏️ SELECT CALIBRATION Id')
+
+col12, col22 = st.columns(2)
+
+with col12:
+    holder_model = st.empty()
+    MODEL_ID = holder_model.text_input(label="✏️ ENTER CALIBRATION Id", value="", label_visibility='collapsed')
+
+with col22:
+    with st.popover(USUAL_ICONS.EXPANDER.value):
+        st.button(USUAL_ICONS.INSERT.value + " NEW CALIBRATION", use_container_width=True)
 
 
-# FOOTER("FLEXICAL | CALIBRATIONS EDITOR")
+# st.camera_input("POLLA")

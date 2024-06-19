@@ -21,8 +21,6 @@ from enum import Enum, auto
 import streamlit as st
 import pandas as pd
 
-## INTERNAL
-pass
 
 
 ## COMPONENTS
@@ -46,6 +44,12 @@ class USUAL_ICONS(Enum): # 🪪🧮
     LOCK = "🔒"
     LOGIN = "🪪"
 
+def FOOTER(TEXT: str):
+    footer = """<style>.footer {position: fixed;left: 330;bottom: 0;width: 100%;background-color: #000;color: white;text-align: left;}</style><div class='footer'><p>"""
+    footer += TEXT
+    footer += """</p></div>"""
+    return st.markdown(footer, unsafe_allow_html=True)
+
 def INFOBOX(info: str):
     return st.warning(info, icon="🚨")
 
@@ -61,46 +65,60 @@ def YESNOBOX(info: str, FUNCTION):
         if st.button("NO", use_container_width=True):
             st.rerun()
 
+def COL_SCI(label: str):
+    return st.column_config.NumberColumn(label=label, format="%.2e")
+
+def DATAFRAME_LIST(DATAFRAME: pd.DataFrame, COLUMN: str) -> tuple[pd.DataFrame, str]:
+    '''
+    Obtiene desde una columna de un data frame, otro dataframe con una columna seleccionable y el item seleccionado
+    '''
+    df_with_selections = DATAFRAME.copy()
+    df_with_selections.insert(0, "✔️", False)
+
+    # Get dataframe row-selections from user with st.data_editor
+    edited_df = st.data_editor(
+        df_with_selections,
+        hide_index=True,
+        column_config={
+            "✔️": st.column_config.CheckboxColumn(required=True, width='small'),
+            COLUMN: st.column_config.TextColumn(required=True, width='large'),
+        },
+        disabled=DATAFRAME.columns,
+        use_container_width=True
+    )
+
+    # Filter the dataframe using the temporary column, then drop the column
+    selected_rows = edited_df[edited_df["✔️"]]
+    selected_rows.drop("✔️", axis=1)
+
+    SELECTED: str = None
+    if len(selected_rows) == 1:
+        SELECTED = selected_rows[COLUMN].iloc[0]
+
+    return edited_df, SELECTED
+
+
+
+## FUNCTIONS
+## __________________________________________________________________________________________________
+
 def GET_FIRM() -> str:
     date_now = datetime.now().strftime("%Y-%m-%d / %H:%M")
     return f"{st.session_state.LOGIN_STATUS} [{date_now}]"
 
-def COL_SCI(label: str):
-    return st.column_config.NumberColumn(label=label, format="%.2e")
 
-def FOOTER(TEXT: str):
-    footer = """<style>.footer {position: fixed;left: 330;bottom: 0;width: 100%;background-color: #000;color: white;text-align: left;}</style><div class='footer'><p>"""
-    footer += TEXT
-    footer += """</p></div>"""
-    return st.markdown(footer, unsafe_allow_html=True)
 
 ## MENUS
 ## __________________________________________________________________________________________________
 
-@st.experimental_dialog("🪪 LOGIN")
-def LOGIN():
-    '''
-    Ejemplo1:
-        - https://docs.streamlit.io/knowledge-base/deploy/authentication-without-sso
-    '''
-    st.session_state.LOGIN_STATUS = None
-    # st.text(get_remote_ip())
-    # st.text(st.experimental_user.to_dict())
+# st.sidebar.page_link("app.py", label="HOME", icon="🏠")
+# st.sidebar.page_link(r"pages/PROFILE.py", label=":blue-background[PROFILE]", icon="🧬", use_container_width=True)
+# st.sidebar.page_link(r"pages/DEVICE_TYPES.py", label="DEVICE TYPES", icon="🚗")
+# st.sidebar.page_link(r"pages/MANUFACTURERS.py", label="MANUFACTURERS", icon="🚗")
+# st.sidebar.page_link(r"pages/MODELS.py", label="MODELS", icon="🚗")
+# st.sidebar.page_link(r"pages/PROCEDURES.py", label=":blue-background[PROCEDURES]", icon="🧬", use_container_width=True)
+# st.sidebar.page_link(r"pages/TEMPLATES.py", label=":blue-background[TEMPLATES]", icon="🧬", use_container_width=True)
 
-    USERNAME = st.text_input("USERNAME *")
-    PASSWORD = st.text_input("PASSWORD *", type='password')
-
-    st.text("") # SEPARATOR
-    if st.button(label="☝️ LOGIN", use_container_width=True):
-        if USERNAME == None or USERNAME == str():
-            INFOBOX("PLEASE pon el nombre bro")
-            return
-        # if PASSWORD == None or PASSWORD == str():
-        
-        # INFOBOX(PASSWORD)
-        # return None
-        st.session_state.LOGIN_STATUS = USERNAME
-        st.rerun()
 
 def SIDEBAR():
     if 'LOGIN_STATUS' not in st.session_state:
@@ -120,34 +138,32 @@ def SIDEBAR():
             # if st.sidebar.button(label="📦 DB ITEMS", use_container_width=True):
                 # st.switch_page(r"pages/DATABASE.py")
         st.sidebar.page_link(r"pages/DATABASE.py", label="DB ITEMS", icon="📦")
-        SB_EDITORS()
+        # SB_EDITORS()
+        st.sidebar.text("")
+        with st.sidebar.expander("__✏️ EDITORS__", expanded=True):
+            st.text("")
+            st.page_link(r"pages/MODELS.py", label="MODELS") # , icon="🚗"
+            st.page_link(r"pages/PROCEDURES.py", label="PROCEDURES", use_container_width=True)
+            st.page_link(r"pages/TEMPLATES.py", label="TEMPLATES", use_container_width=True)
+            st.page_link(r"pages/CALIBRATIONS.py", label="CALIBRATIONS", use_container_width=True)
 
     else: 
-        if st.sidebar.button("🪪 LOGIN", use_container_width=True):
-            LOGIN()
+        # if st.sidebar.button("🪪 LOGIN", use_container_width=True):
+        st.switch_page(r"pages/LOGIN.py")
 
-def SB_EDITORS():
-    st.sidebar.text("")
-    with st.sidebar.expander("__✏️ EDITORS__", expanded=True):
-        st.text("")
-        st.page_link(r"pages/MODELS.py", label="MODELS") # , icon="🚗"
-        st.page_link(r"pages/PROCEDURES.py", label="PROCEDURES", use_container_width=True)
-        st.page_link(r"pages/TEMPLATES.py", label="TEMPLATES", use_container_width=True)
-        st.page_link(r"pages/CALIBRATIONS.py", label="CALIBRATIONS", use_container_width=True)
+# def SB_EDITORS():
+#     st.sidebar.text("")
+#     with st.sidebar.expander("__✏️ EDITORS__", expanded=True):
+#         st.text("")
+#         st.page_link(r"pages/MODELS.py", label="MODELS") # , icon="🚗"
+#         st.page_link(r"pages/PROCEDURES.py", label="PROCEDURES", use_container_width=True)
+#         st.page_link(r"pages/TEMPLATES.py", label="TEMPLATES", use_container_width=True)
+#         st.page_link(r"pages/CALIBRATIONS.py", label="CALIBRATIONS", use_container_width=True)
 
 
 
 ## TEMP
 ## __________________________________________________________________________________________________
-
-
-# st.sidebar.page_link("app.py", label="HOME", icon="🏠")
-# st.sidebar.page_link(r"pages/PROFILE.py", label=":blue-background[PROFILE]", icon="🧬", use_container_width=True)
-# st.sidebar.page_link(r"pages/DEVICE_TYPES.py", label="DEVICE TYPES", icon="🚗")
-# st.sidebar.page_link(r"pages/MANUFACTURERS.py", label="MANUFACTURERS", icon="🚗")
-# st.sidebar.page_link(r"pages/MODELS.py", label="MODELS", icon="🚗")
-# st.sidebar.page_link(r"pages/PROCEDURES.py", label=":blue-background[PROCEDURES]", icon="🧬", use_container_width=True)
-# st.sidebar.page_link(r"pages/TEMPLATES.py", label=":blue-background[TEMPLATES]", icon="🧬", use_container_width=True)
 
 
 # from streamlit import runtime
