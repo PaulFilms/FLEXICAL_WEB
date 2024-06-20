@@ -56,12 +56,12 @@ class MODEL:
         def toJSON(self) -> str:
             return json.dumps(asdict(self))
 
-tbl_specification_config={
+tbl_specification_config = {
         'RANGE1_MIN': st.column_config.NumberColumn(default=0.0),
         'RANGE1_MAX': st.column_config.NumberColumn(default=0.0),
         'RANGE2_MIN': st.column_config.NumberColumn(default=None),
         'RANGE2_MAX': st.column_config.NumberColumn(default=None),
-        'EVALUATION': st.column_config.TextColumn(default="-"),
+        'EVALUATION': st.column_config.TextColumn(default="VALUE1*C1 # VALUE2"),
         'RESOLUTION': st.column_config.NumberColumn(format="%.2e", default=0.0), #, default=0.0), format="%.2e"
         'C1': st.column_config.NumberColumn(format="%.2e", default=0.0),
         'C2': st.column_config.NumberColumn(format="%.2e", default=0.0),
@@ -159,7 +159,7 @@ def FUNC(CURRENT_PROCEDURE: str):
             else:
                 st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = TBL_DATA.to_dict()
             # INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
-            print(st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE])
+            # print(st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE])
             SQL_UPDATE_DB("MODELS", MODEL_ID, st.session_state.DB_DATA)
             st.rerun()
 
@@ -167,8 +167,8 @@ def FUNC(CURRENT_PROCEDURE: str):
 ## PAGE
 ## __________________________________________________________________________________________________
 
-if not st.session_state.LOGIN_STATUS:
-    st.switch_page(r"pages/LOGIN.py")
+# if not st.session_state.LOGIN_STATUS:
+#     st.switch_page(r"pages/LOGIN.py")
 
 ## SIDEBAR & BASIC COMPONENTS
 st.logo(os.path.join(path_resources, r"LOGO2.svg"))
@@ -213,14 +213,15 @@ with col22:
             MODEL_ID = holder_model.text_input(label="✏️ ENTER MODEL Id", value=get_filter()['Id'].iloc[0], disabled=False, label_visibility='collapsed')
 
 if MODEL_ID:
-    # if "MODEL" not in st.session_state:
-    #     st.session_state.MODEL = 1
+    CURRENT_MODEL = None
+    st.session_state.DB_DATA = None
     SQL = SQL_MODEL(MODEL_ID, st.session_state.MODELS)
-    # print(SQL)
+
     if SQL.count != 1:
-        CURRENT_MODEL = None
-        st.session_state.DB_DATA = None
+        # CURRENT_MODEL = None
+        # st.session_state.DB_DATA = None
         st.warning(f"< {MODEL_ID} > don't exits", icon="⚠️")
+    
     else:
         CURRENT_MODEL = MODEL.TypeDict(**SQL.data[0])
         CURRENT_DB = CURRENT_MODEL["DB"]
@@ -245,6 +246,7 @@ if MODEL_ID:
         st.session_state.info_editor = st.toggle("LOCK", value=True)
         INFO(CURRENT_MODEL["INFO"])
 
+
         ## SPECIFICATIONS
         ## __________________________________________________________________________________________________
 
@@ -256,11 +258,9 @@ if MODEL_ID:
         
 
         ## PROCEDURES
-
         col12, col22 = st.columns(2)
 
         with col12:
-            # st.session_state.MODEL_PROCEDURES = pd.DataFrame(list(st.session_state.DB_DATA['SPECIFICATIONS'].keys()), columns=["PROCEDURE_ID"])
             COLUMN_NAME = "PROCEDURE Id"
             MODEL_PROCEDURES = pd.DataFrame(list(st.session_state.DB_DATA['SPECIFICATIONS'].keys()), columns=[COLUMN_NAME])
             TBL_PROCEDURES, CURRENT_PROCEDURE = DATAFRAME_LIST(MODEL_PROCEDURES, COLUMN_NAME) # st.session_state.MODEL_PROCEDURES
@@ -312,7 +312,6 @@ if MODEL_ID:
 
         with col_1_8:
             with st.container(border=True):
-                # DICT = st.session_state.current_model_db
                 JSON = json.dumps(st.session_state.DB_DATA)
                 st.json(JSON, expanded=False)
         

@@ -46,14 +46,14 @@ class PROCEDURE:
         FIRM: str
 
 tbl_cmc_config={
-    'RANGE1_MIN': st.column_config.NumberColumn(default=0.0),
-    'RANGE1_MAX': st.column_config.NumberColumn(default=0.0),
-    'RANGE2_MIN': st.column_config.NumberColumn(default=None),
-    'RANGE2_MAX': st.column_config.NumberColumn(default=None),
-    'EVALUATION': st.column_config.TextColumn(default="-"),
-    'C1': st.column_config.NumberColumn(format="%.2e", default=None), # 0.0
-    'C2': st.column_config.NumberColumn(format="%.2e", default=None), # 0.0
-    'C3': st.column_config.NumberColumn(format="%.2e", default=None), # 0.0
+    'RANGE1_MIN': st.column_config.NumberColumn(format="%.2e", default=0.0, min_value=-1e-16, max_value=1e16),
+    'RANGE1_MAX': st.column_config.NumberColumn(format="%.2e", default=0.0, min_value=-1e-16, max_value=1e16),
+    'RANGE2_MIN': st.column_config.NumberColumn(format="%.2e", default=None, min_value=-1e-16, max_value=1e16),
+    'RANGE2_MAX': st.column_config.NumberColumn(format="%.2e", default=None, min_value=-1e-16, max_value=1e16),
+    'EVALUATION': st.column_config.TextColumn(default="C1 # VALUE1 VALUE2"),
+    'C1': st.column_config.NumberColumn(format="%.2e", default=0.0, min_value=-1e-16, max_value=1e16), # 0.0
+    'C2': st.column_config.NumberColumn(format="%.2e", default=None, min_value=-1e-16, max_value=1e16), # 0.0
+    'C3': st.column_config.NumberColumn(format="%.2e", default=None, min_value=-1e-16, max_value=1e16), # 0.0
 }
 
 # def get_selected(DATAFRAME: pd.DataFrame) -> tuple[pd.DataFrame, str]:
@@ -148,7 +148,7 @@ if PROCEDURE_ID:
     else:
         CURRENT_PROCEDURE = PROCEDURE.TypeDict(**SQL[0])
         CURRENT_DB = CURRENT_PROCEDURE["DB"]
-        st.write(CURRENT_PROCEDURE)
+        st.json(CURRENT_PROCEDURE, expanded=False)
 
         ## DB DATA
         if isinstance(CURRENT_DB, str):
@@ -244,25 +244,53 @@ if PROCEDURE_ID:
         if not st.session_state.DB_DATA.get('CMC'):
             st.session_state.DB_DATA['CMC'] = dict()
 
-
-
-        DF = pd.DataFrame(st.session_state.DB_DATA['CMC'], columns=list(tbl_cmc_config.keys()))
-        DF['EVALUATION'] = DF['EVALUATION'].astype(str)
-        DF = DF.reset_index()
-        del DF['index']
+        DF_CMC = pd.DataFrame(st.session_state.DB_DATA['CMC'], columns=list(tbl_cmc_config.keys()))
+        DF_CMC['RANGE1_MIN'] = DF_CMC['RANGE1_MIN'].astype(float)
+        DF_CMC['RANGE1_MAX'] = DF_CMC['RANGE1_MAX'].astype(float)
+        DF_CMC['RANGE2_MIN'] = DF_CMC['RANGE2_MIN'].astype(float)
+        DF_CMC['RANGE2_MAX'] = DF_CMC['RANGE2_MAX'].astype(float)
+        DF_CMC['EVALUATION'] = DF_CMC['EVALUATION'].astype(str)
+        DF_CMC['C1'] = DF_CMC['C1'].astype(float)
+        DF_CMC['C2'] = DF_CMC['C2'].astype(float)
+        DF_CMC['C3'] = DF_CMC['C3'].astype(float)
+        DF_CMC = DF_CMC.reset_index()
+        del DF_CMC['index']
 
         TBL_CMC = st.data_editor(
-            DF,
+            DF_CMC,
             hide_index=True,
             num_rows='dynamic',
             column_config=tbl_cmc_config,
             use_container_width=True
         )
 
-        if st.button(USUAL_ICONS.UPDATE.value + " UPDATE"):
-            st.write(TBL_CMC)
 
-        # st.write(st.session_state.DB_DATA)
+
+        try:
+            col13, col23, col33 = st.columns(3)
+            with col13:
+                VALUE1 = st.number_input("VALUE1", min_value=TBL_CMC['RANGE1_MIN'].min(), max_value=TBL_CMC['RANGE1_MAX'].max(), label_visibility='collapsed', step=0.0001)
+            with col23:
+                VALUE2 = st.number_input("VALUE2", min_value=TBL_CMC['RANGE2_MIN'].min(), max_value=TBL_CMC['RANGE2_MAX'].max(), label_visibility='collapsed', step=0.0001)
+                with col33:
+                    VALUE = TABLE_DATA.GET_VALUE(TBL_CMC, VALUE1, VALUE2)
+                    if VALUE:
+                        # st.text(f"RESULT: {VALUE:.2E}")
+                        html = '''<div style="text-align: right;">'''
+                        html += f"RESULT:  {VALUE:.2E}"
+                        html += '''</div>'''
+                        st.markdown(html, unsafe_allow_html=True)
+        except:
+            st.warning(USUAL_ICONS.WARNINNG.value)
+
+        if st.button(USUAL_ICONS.UPDATE.value + " UPDATE"):
+            if len(TBL_CMC) == 0:
+                st.session_state.DB_DATA['CMC'] = {}
+            else:
+                st.session_state.DB_DATA['CMC'] = TBL_CMC.to_dict()
+            SQL_UPDATE_DB("PROCEDURES", PROCEDURE_ID, st.session_state.DB_DATA)
+            st.toast("🏁 CMC Updated")
+
 
         ## PYDATA
         st.text("")
