@@ -46,10 +46,10 @@ class PROCEDURE:
         FIRM: str
 
 tbl_cmc_config={
-    'RANGE1_MIN': st.column_config.NumberColumn(format="%.2e", default=0.0, min_value=-1e-16, max_value=1e16),
-    'RANGE1_MAX': st.column_config.NumberColumn(format="%.2e", default=0.0, min_value=-1e-16, max_value=1e16),
-    'RANGE2_MIN': st.column_config.NumberColumn(format="%.2e", default=None, min_value=-1e-16, max_value=1e16),
-    'RANGE2_MAX': st.column_config.NumberColumn(format="%.2e", default=None, min_value=-1e-16, max_value=1e16),
+    'RANGE1_MIN': st.column_config.NumberColumn(default=0.0, format="%.2e"), # min_value=-1e-16, max_value=1e16),
+    'RANGE1_MAX': st.column_config.NumberColumn(default=0.0, format="%.2e"), # min_value=-1e-16, max_value=1e16),
+    'RANGE2_MIN': st.column_config.NumberColumn(default=None,format="%.2e"), # min_value=-1e-16, max_value=1e16),
+    'RANGE2_MAX': st.column_config.NumberColumn(default=None,format="%.2e"), # min_value=-1e-16, max_value=1e16),
     'EVALUATION': st.column_config.TextColumn(default="C1 # VALUE1 VALUE2"),
     'C1': st.column_config.NumberColumn(format="%.2e", default=0.0, min_value=-1e-16, max_value=1e16), # 0.0
     'C2': st.column_config.NumberColumn(format="%.2e", default=None, min_value=-1e-16, max_value=1e16), # 0.0
@@ -264,14 +264,21 @@ if PROCEDURE_ID:
             use_container_width=True
         )
 
+        with st.popover(USUAL_ICONS.EXPANDER.value):
+            st.button("UPLOAD", use_container_width=True)
+            st.toggle('CHECKER')
+
 
 
         try:
             col13, col23, col33 = st.columns(3)
             with col13:
                 VALUE1 = st.number_input("VALUE1", min_value=TBL_CMC['RANGE1_MIN'].min(), max_value=TBL_CMC['RANGE1_MAX'].max(), label_visibility='collapsed', step=0.0001)
+                # VALUE1 = st.text_input("VALUE1", value="0.0", label_visibility='collapsed') # min_value=TBL_CMC['RANGE1_MIN'].min(), max_value=TBL_CMC['RANGE1_MAX'].max(), step=0.0001)
             with col23:
                 VALUE2 = st.number_input("VALUE2", min_value=TBL_CMC['RANGE2_MIN'].min(), max_value=TBL_CMC['RANGE2_MAX'].max(), label_visibility='collapsed', step=0.0001)
+                # VALUE2 = st.text_input("VALUE2", value=None, label_visibility='collapsed', disabled=pd.isna(TBL_CMC['RANGE2_MIN'].min())) # min_value=TBL_CMC['RANGE2_MIN'].min(), max_value=TBL_CMC['RANGE2_MAX'].max(), step=0.0001)
+                
                 with col33:
                     VALUE = TABLE_DATA.GET_VALUE(TBL_CMC, VALUE1, VALUE2)
                     if VALUE:
