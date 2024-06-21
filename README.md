@@ -24,5 +24,7 @@ Web framework to manage the main data of application
 - MOBILE APP
     * QR Codes
 
+- Eliminar pip st-supabase-connection, y usar el sistema de supabase de streamlit
+
 ## WARNINGS:
 - BETA Version
