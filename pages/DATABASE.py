@@ -17,7 +17,7 @@ import pandas as pd
 ## INTERNAL
 from menu import *
 from db import *
-from pages.MODELS import MODEL
+# from pages.MODELS import MODEL
 
 
 ## SESSION STATES

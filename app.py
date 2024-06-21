@@ -38,7 +38,7 @@ if 'LOGIN_STATUS' not in st.session_state:
 #     st.switch_page(r"pages/LOGIN.py")
 
 ## SIDEBAR & BASIC COMPONENTS
-st.logo(os.path.join(path_resources, r"LOGO2.svg"))
+# st.logo(os.path.join(path_resources, r"LOGO2.svg"))
 st.image(os.path.join(path_resources, r"LOGO2.svg"), use_column_width=False) # flexical_developer
 SIDEBAR()
 
@@ -81,6 +81,7 @@ with col22:
 
 st.divider()
 # st.text("DEVELOPED FOR R&S TO R&S")
+
 st.image(
     os.path.join(path_resources, r"R&S Logo - Complete.svg"), 
     # use_column_width=True,

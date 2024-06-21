@@ -19,6 +19,7 @@ from menu import *
 from db import *
 
 
+
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
@@ -30,6 +31,7 @@ if 'MODELS' not in st.session_state:
 
 if 'DB_DATA' not in st.session_state:
     st.session_state.DB_DATA = None
+
 
 
 ## OBJECTS
@@ -57,11 +59,11 @@ class MODEL:
             return json.dumps(asdict(self))
 
 tbl_specification_config = {
-        'RANGE1_MIN': st.column_config.NumberColumn(default=0.0),
-        'RANGE1_MAX': st.column_config.NumberColumn(default=0.0),
-        'RANGE2_MIN': st.column_config.NumberColumn(default=None),
-        'RANGE2_MAX': st.column_config.NumberColumn(default=None),
-        'EVALUATION': st.column_config.TextColumn(default="VALUE1*C1 # VALUE2"),
+        'RANGE1_MIN': st.column_config.NumberColumn(format="%.2e", default=0.0),
+        'RANGE1_MAX': st.column_config.NumberColumn(format="%.2e", default=0.0),
+        'RANGE2_MIN': st.column_config.NumberColumn(format="%.2e", default=None),
+        'RANGE2_MAX': st.column_config.NumberColumn(format="%.2e", default=None),
+        'EVALUATION': st.column_config.TextColumn(default='''(VALUE1*C1*1e1)+(C2*1e1)''', width='small'),
         'RESOLUTION': st.column_config.NumberColumn(format="%.2e", default=0.0), #, default=0.0), format="%.2e"
         'C1': st.column_config.NumberColumn(format="%.2e", default=0.0),
         'C2': st.column_config.NumberColumn(format="%.2e", default=0.0),
@@ -123,7 +125,14 @@ def SQL_MODEL(MODEL_ID: str, COUNT: int):
 def FUNC(CURRENT_PROCEDURE: str):
     if CURRENT_PROCEDURE:
         DF = pd.DataFrame(st.session_state.DB_DATA['SPECIFICATIONS'].get(CURRENT_PROCEDURE), columns=list(tbl_specification_config.keys()))
+        DF['RANGE1_MIN'] = DF['RANGE1_MIN'].astype(float)
+        DF['RANGE1_MAX'] = DF['RANGE1_MAX'].astype(float)
+        DF['RANGE2_MIN'] = DF['RANGE2_MIN'].astype(float)
+        DF['RANGE2_MAX'] = DF['RANGE2_MAX'].astype(float)
         DF['EVALUATION'] = DF['EVALUATION'].astype(str)
+        DF['C1'] = DF['C1'].astype(float)
+        DF['C2'] = DF['C2'].astype(float)
+        DF['C3'] = DF['C3'].astype(float)
         DF = DF.reset_index()
         del DF['index']
 
@@ -150,8 +159,9 @@ def FUNC(CURRENT_PROCEDURE: str):
                     html += f"RESULT:  {VALUE:.2E}"
                     html += '''</div>'''
                     st.markdown(html, unsafe_allow_html=True)
-        except:
+        except Exception as e:
             st.warning(USUAL_ICONS.WARNINNG.value)
+            st.warning(e)
         
         if st.button("UPDATE DATA DB"):
             if len(TBL_DATA) == 0:
@@ -164,6 +174,7 @@ def FUNC(CURRENT_PROCEDURE: str):
             st.rerun()
 
 
+
 ## PAGE
 ## __________________________________________________________________________________________________
 
@@ -171,7 +182,7 @@ def FUNC(CURRENT_PROCEDURE: str):
 #     st.switch_page(r"pages/LOGIN.py")
 
 ## SIDEBAR & BASIC COMPONENTS
-st.logo(os.path.join(path_resources, r"LOGO2.svg"))
+# st.logo(os.path.join(path_resources, r"LOGO2.svg"))
 SIDEBAR()
 
 st.text('✏️ SELECT MODEL Id')
@@ -300,6 +311,7 @@ if MODEL_ID:
                     YESNO_int(f"DO YOU WANT TO DELETE THIS PROCEDURE?\n< {CURRENT_PROCEDURE} >")
 
         FUNC(CURRENT_PROCEDURE)
+
 
         ## DB DATA JSON
         ## __________________________________________________________________________________________________

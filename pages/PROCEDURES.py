@@ -56,41 +56,14 @@ tbl_cmc_config={
     'C3': st.column_config.NumberColumn(format="%.2e", default=None, min_value=-1e-16, max_value=1e16), # 0.0
 }
 
-# def get_selected(DATAFRAME: pd.DataFrame) -> tuple[pd.DataFrame, str]:
-#     df_with_selections = DATAFRAME.copy()
-#     df_with_selections.insert(0, "✔️", False)
-
-#     # Get dataframe row-selections from user with st.data_editor
-#     edited_df = st.data_editor(
-#         df_with_selections,
-#         hide_index=True,
-#         column_config={
-#             "✔️": st.column_config.CheckboxColumn(required=True, width='small'),
-#             'DEVICE TYPE': st.column_config.TextColumn(required=True, width='large'),
-#         },
-#         disabled=DATAFRAME.columns,
-#         use_container_width=True
-#     )
-
-#     # Filter the dataframe using the temporary column, then drop the column
-#     selected_rows = edited_df[edited_df["✔️"]]
-#     selected_rows.drop("✔️", axis=1)
-
-#     STANDARD: str = None
-#     if len(selected_rows) == 1:
-#         STANDARD = selected_rows['DEVICE TYPE'].iloc[0]
-
-#     return edited_df, STANDARD
 
 
 ## PAGE
 ## __________________________________________________________________________________________________
 
-# if not st.session_state.LOGIN_STATUS:
-#     st.switch_page(r"app.py")
 
 ## SIDEBAR & BASIC COMPONENTS
-st.logo(os.path.join(path_resources, r"LOGO2.svg"))
+# st.logo(os.path.join(path_resources, r"LOGO2.svg"))
 SIDEBAR()
 
 st.text("PROCEDURE Id")

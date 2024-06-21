@@ -121,6 +121,7 @@ def GET_FIRM() -> str:
 
 
 def SIDEBAR():
+    st.logo(os.path.join(path_resources, r"LOGO2.svg"))
     if 'LOGIN_STATUS' not in st.session_state:
         st.session_state.LOGIN_STATUS = None
     if st.session_state.LOGIN_STATUS:

@@ -32,7 +32,7 @@ if 'LOGIN_STATUS' not in st.session_state:
 #     st.switch_page(r"pages/LOGIN.py")
 
 ## SIDEBAR & BASIC COMPONENTS
-st.logo(os.path.join(path_resources, r"LOGO2.svg"))
+# st.logo(os.path.join(path_resources, r"LOGO2.svg"))
 SIDEBAR()
 
 # col13, col23, col33 = st.columns(3)
