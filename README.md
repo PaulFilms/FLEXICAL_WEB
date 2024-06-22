@@ -29,4 +29,4 @@ Web framework to manage the main data of application
 - ¿? Eliminar pip st-supabase-connection, y usar el sistema de supabase de streamlit
 
 ## WARNINGS:
-- :red-background[ALPHA Version / INCOMPLETE]
+- `ALPHA Version / INCOMPLETE`
