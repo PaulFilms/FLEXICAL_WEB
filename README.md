@@ -8,6 +8,8 @@ Web framework to manage the main data of application
     * Sign Up form
     * DB Users Table
 - Add Download Page
+    * Complete DB Local Download
+    * Edit License
 - PAGE DATABASE:
     * Add Exports
     * Complete all forms
@@ -24,7 +26,7 @@ Web framework to manage the main data of application
 - MOBILE APP
     * QR Codes
 
-- Eliminar pip st-supabase-connection, y usar el sistema de supabase de streamlit
+- ¿? Eliminar pip st-supabase-connection, y usar el sistema de supabase de streamlit
 
 ## WARNINGS:
-- BETA Version
+- :red-background[ALPHA Version / INCOMPLETE]

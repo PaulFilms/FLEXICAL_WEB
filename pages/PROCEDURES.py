@@ -242,6 +242,9 @@ if PROCEDURE_ID:
         # [➡️ PYDATA](#pydata)
         # """, unsafe_allow_html=True)
 
+        if CURRENT_PROCEDURE["PYDATA"] == None:
+            CURRENT_PROCEDURE["PYDATA"] = str()
+
         PYDATA_EDITOR("PROCEDURES", PROCEDURE_ID, CURRENT_PROCEDURE["PYDATA"])
 
 

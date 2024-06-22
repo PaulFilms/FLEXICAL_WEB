@@ -331,8 +331,8 @@ def PYDATA_EDITOR(TABLE: str, ID: str, PYDATA: str):
         st.code(PYDATA, language='python')
     with col22:
         with st.popover(USUAL_ICONS.EXPANDER.value):
-            btn_editor = st.button('✏️ EDITOR', use_container_width=True, key='PYDATA_EDITOR')
-            btn_export = st.download_button(
+            btn_editor = st.button('✏️ EDITOR', use_container_width=True, key='PYDATA_EDITOR_EDITOR')
+            st.download_button(
                     label=USUAL_ICONS.SAVE.value + " EXPORT .py",
                     data=PYDATA,
                     file_name=f"{ID}.py",
