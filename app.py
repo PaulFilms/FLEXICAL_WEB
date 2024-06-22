@@ -22,8 +22,6 @@ st.set_page_config(
 )
 
 
-
-
 ## SESSION STATES
 ## __________________________________________________________________________________________________
 
@@ -34,13 +32,8 @@ if 'LOGIN_STATUS' not in st.session_state:
 ## PAGE
 ## __________________________________________________________________________________________________
 
-# if not st.session_state.LOGIN_STATUS:
-#     st.switch_page(r"pages/LOGIN.py")
-
-## SIDEBAR & BASIC COMPONENTS
-# st.logo(os.path.join(path_resources, r"LOGO2.svg"))
-st.image(os.path.join(path_resources, r"LOGO2.svg"), use_column_width=False) # flexical_developer
 SIDEBAR()
+st.image(os.path.join(path_resources, r"LOGO2.svg"), use_column_width=False) # flexical_developer
 
 st.text("ABOUT FLEXICAL")
 with st.container(border=True):
@@ -70,12 +63,6 @@ with col22:
         st.page_link("https://github.com/PaulFilms/FLEXICAL_WEB", label="GITHUB REPOSITORY", use_container_width=True)
         st.text(" * SPECIFICATIONS")
         st.text(" * USER MANUAL")
-        # st.text("")
-        # st.text("")
-        # st.text("")
-        # st.text("")
-        # st.text("")
-        # st.text("")
 
 # st.image(r"https://file.notion.so/f/f/21f0811a-a634-472d-8c7b-9a0052fd6b63/969d0671-e768-4a4d-b328-a5f8f0361054/Untitled.png?id=f15b711f-5207-4f97-b551-48c5fbe36521&table=block&spaceId=21f0811a-a634-472d-8c7b-9a0052fd6b63&expirationTimestamp=1718373600000&signature=-f23vCxQFa0Zn8FS-s_tKV0bkpBJTw9jEN1QnrmxQ4g&downloadName=Untitled.png")
 
@@ -84,6 +71,5 @@ st.divider()
 
 st.image(
     os.path.join(path_resources, r"R&S Logo - Complete.svg"), 
-    # use_column_width=True,
     width=250
 )

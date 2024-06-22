@@ -75,17 +75,17 @@ tbl_specification_config = {
 ## MENU
 ## __________________________________________________________________________________________________
 
-def INFO(TEXT: str):
-    if st.session_state.info_editor:
-        with st.container(border=True):
-            st.markdown(TEXT)
-    else:
-        INFOMD = st.text_area("INFO", value=TEXT, label_visibility='collapsed')
-        if INFOMD != CURRENT_MODEL["INFO"]:
-            if st.button(USUAL_ICONS.UPDATE.value + " UPDATE INFO"):
-                execute_query(conn.table("MODELS").update({"INFO": INFOMD}).eq("Id", MODEL_ID), ttl=0)
-                st.session_state.MODELS += 1
-                st.toast("INFO Updated")
+# def INFO(TEXT: str):
+#     if st.session_state.info_editor:
+#         with st.container(border=True):
+#             st.markdown(TEXT)
+#     else:
+#         INFOMD = st.text_area("INFO", value=TEXT, label_visibility='collapsed')
+#         if INFOMD != CURRENT_MODEL["INFO"]:
+#             if st.button(USUAL_ICONS.UPDATE.value + " UPDATE INFO"):
+#                 execute_query(conn.table("MODELS").update({"INFO": INFOMD}).eq("Id", MODEL_ID), ttl=0)
+#                 st.session_state.MODELS += 1
+#                 st.toast("INFO Updated")
 
 @st.cache_resource
 def SQL_MODEL(MODEL_ID: str, COUNT: int):
@@ -122,67 +122,63 @@ def SQL_MODEL(MODEL_ID: str, COUNT: int):
 
 #     return edited_df, PROCEDURE
 
-def FUNC(CURRENT_PROCEDURE: str):
-    if CURRENT_PROCEDURE:
-        DF = pd.DataFrame(st.session_state.DB_DATA['SPECIFICATIONS'].get(CURRENT_PROCEDURE), columns=list(tbl_specification_config.keys()))
-        DF['RANGE1_MIN'] = DF['RANGE1_MIN'].astype(float)
-        DF['RANGE1_MAX'] = DF['RANGE1_MAX'].astype(float)
-        DF['RANGE2_MIN'] = DF['RANGE2_MIN'].astype(float)
-        DF['RANGE2_MAX'] = DF['RANGE2_MAX'].astype(float)
-        DF['EVALUATION'] = DF['EVALUATION'].astype(str)
-        DF['C1'] = DF['C1'].astype(float)
-        DF['C2'] = DF['C2'].astype(float)
-        DF['C3'] = DF['C3'].astype(float)
-        DF = DF.reset_index()
-        del DF['index']
+# def FUNC(CURRENT_PROCEDURE: str):
+#     if CURRENT_PROCEDURE:
+#         DF = pd.DataFrame(st.session_state.DB_DATA['SPECIFICATIONS'].get(CURRENT_PROCEDURE), columns=list(tbl_specification_config.keys()))
+#         DF['RANGE1_MIN'] = DF['RANGE1_MIN'].astype(float)
+#         DF['RANGE1_MAX'] = DF['RANGE1_MAX'].astype(float)
+#         DF['RANGE2_MIN'] = DF['RANGE2_MIN'].astype(float)
+#         DF['RANGE2_MAX'] = DF['RANGE2_MAX'].astype(float)
+#         DF['EVALUATION'] = DF['EVALUATION'].astype(str)
+#         DF['C1'] = DF['C1'].astype(float)
+#         DF['C2'] = DF['C2'].astype(float)
+#         DF['C3'] = DF['C3'].astype(float)
+#         DF = DF.reset_index()
+#         del DF['index']
 
-        st.text("") # SEPARATOR
-        st.text("") # SEPARATOR
-        TBL_DATA = st.data_editor(
-            DF,
-            hide_index=True,
-            num_rows='dynamic',
-            column_config=tbl_specification_config,
-            use_container_width=True
-        )
-        try:
-            col13, col23, col33 = st.columns(3)
-            with col13:
-                VALUE1 = st.number_input("VALUE1", min_value=TBL_DATA['RANGE1_MIN'].min(), max_value=TBL_DATA['RANGE1_MAX'].max(), label_visibility='collapsed', step=0.0001)
-            with col23:
-                VALUE2 = st.number_input("VALUE2", min_value=TBL_DATA['RANGE2_MIN'].min(), max_value=TBL_DATA['RANGE2_MAX'].max(), label_visibility='collapsed', step=0.0001)
-            with col33:
-                VALUE = TABLE_DATA.GET_VALUE(TBL_DATA, VALUE1, VALUE2)
-                if VALUE:
-                    # st.text(f"RESULT: {VALUE:.2E}")
-                    html = '''<div style="text-align: right;">'''
-                    html += f"RESULT:  {VALUE:.2E}"
-                    html += '''</div>'''
-                    st.markdown(html, unsafe_allow_html=True)
-        except Exception as e:
-            st.warning(USUAL_ICONS.WARNINNG.value)
-            st.warning(e)
+#         st.text("") # SEPARATOR
+#         st.text("") # SEPARATOR
+#         TBL_DATA = st.data_editor(
+#             DF,
+#             hide_index=True,
+#             num_rows='dynamic',
+#             column_config=tbl_specification_config,
+#             use_container_width=True
+#         )
+#         try:
+#             col13, col23, col33 = st.columns(3)
+#             with col13:
+#                 VALUE1 = st.number_input("VALUE1", min_value=TBL_DATA['RANGE1_MIN'].min(), max_value=TBL_DATA['RANGE1_MAX'].max(), label_visibility='collapsed', step=0.0001)
+#             with col23:
+#                 VALUE2 = st.number_input("VALUE2", min_value=TBL_DATA['RANGE2_MIN'].min(), max_value=TBL_DATA['RANGE2_MAX'].max(), label_visibility='collapsed', step=0.0001)
+#             with col33:
+#                 VALUE = TABLE_DATA.GET_VALUE(TBL_DATA, VALUE1, VALUE2)
+#                 if VALUE:
+#                     # st.text(f"RESULT: {VALUE:.2E}")
+#                     html = '''<div style="text-align: right;">'''
+#                     html += f"RESULT:  {VALUE:.2E}"
+#                     html += '''</div>'''
+#                     st.markdown(html, unsafe_allow_html=True)
+#         except Exception as e:
+#             st.warning(USUAL_ICONS.WARNINNG.value)
+#             st.warning(e)
         
-        if st.button("UPDATE DATA DB"):
-            if len(TBL_DATA) == 0:
-                st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = {}
-            else:
-                st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = TBL_DATA.to_dict()
-            # INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
-            # print(st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE])
-            SQL_UPDATE_DB("MODELS", MODEL_ID, st.session_state.DB_DATA)
-            st.rerun()
+#         if st.button("UPDATE DATA DB"):
+#             if len(TBL_DATA) == 0:
+#                 st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = {}
+#             else:
+#                 st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = TBL_DATA.to_dict()
+#             # INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
+#             # print(st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE])
+#             SQL_UPDATE_DB("MODELS", MODEL_ID, st.session_state.DB_DATA)
+#             st.rerun()
 
 
 
 ## PAGE
 ## __________________________________________________________________________________________________
 
-# if not st.session_state.LOGIN_STATUS:
-#     st.switch_page(r"pages/LOGIN.py")
-
 ## SIDEBAR & BASIC COMPONENTS
-# st.logo(os.path.join(path_resources, r"LOGO2.svg"))
 SIDEBAR()
 
 st.text('✏️ SELECT MODEL Id')
@@ -252,17 +248,18 @@ if MODEL_ID:
         ## __________________________________________________________________________________________________
 
         st.text("") # SEPARATOR
-        st.markdown(''':blue-background[💊 INFO & DETAILS:]''')
+        # st.markdown(''':blue-background[💊 INFO & DETAILS:]''')
+        st.subheader('MODEL INFO:', divider='blue')
 
-        st.session_state.info_editor = st.toggle("LOCK", value=True)
-        INFO(CURRENT_MODEL["INFO"])
+        INFO_EDITOR("MODELS", MODEL_ID, CURRENT_MODEL["INFO"])
 
 
         ## SPECIFICATIONS
         ## __________________________________________________________________________________________________
 
         st.text("") # SEPARATOR
-        st.markdown(''':blue-background[💊 SPECIFICATIONS:]''')
+        # st.markdown(''':blue-background[💊 SPECIFICATIONS:]''')
+        st.subheader('SPECIFICATIONS:', divider='blue')
 
         if not st.session_state.DB_DATA.get('SPECIFICATIONS'):
             st.session_state.DB_DATA['SPECIFICATIONS'] = dict()
@@ -310,7 +307,22 @@ if MODEL_ID:
                     
                     YESNO_int(f"DO YOU WANT TO DELETE THIS PROCEDURE?\n< {CURRENT_PROCEDURE} >")
 
-        FUNC(CURRENT_PROCEDURE)
+        # FUNC(CURRENT_PROCEDURE)
+        st.text("") # SEPARATOR
+        st.text("") # SEPARATOR
+        if CURRENT_PROCEDURE:
+            DF_SPEC = pd.DataFrame(st.session_state.DB_DATA['SPECIFICATIONS'].get(CURRENT_PROCEDURE), columns=list(tbl_specification_config.keys()))
+            DF_SPEC['RESOLUTION'] = DF_SPEC['RESOLUTION'].astype(float)
+
+            TBL_SPECIFICATION, BTN_UPDATE = TBL_EDITOR(DF_SPEC)
+            if BTN_UPDATE:
+                if len(TBL_SPECIFICATION) == 0:
+                    st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = {}
+                else:
+                    st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = TBL_SPECIFICATION.to_dict()
+                SQL_UPDATE_DB("MODELS", MODEL_ID, st.session_state.DB_DATA)
+                st.toast("🏁 SPECIFICATIONS Updated")
+                # st.rerun()
 
 
         ## DB DATA JSON
@@ -318,48 +330,7 @@ if MODEL_ID:
 
         st.text("") # SEPARATOR
         st.text("") # SEPARATOR
-        st.markdown(''':blue-background[💊 DB DATA:]''')
+        # st.markdown(''':blue-background[💊 DB DATA:]''')
+        st.subheader('JSON DB DATA:', divider='blue')
 
-        col_1_8, col_8_8 = st.columns([7,1])
-
-        with col_1_8:
-            with st.container(border=True):
-                JSON = json.dumps(st.session_state.DB_DATA)
-                st.json(JSON, expanded=False)
-        
-        # with col_8_8:
-        #     with st.popover(label=chr(8801)):
-        #         NEW_ITEM = st.text_input("FIELD", label_visibility='collapsed')
-        #         if st.button("INSERT NEW FIELD ⤵️", use_container_width=True):
-        #             print('AÑDIMOS:', NEW_ITEM)
-        #             st.session_state.DB_DATA[NEW_ITEM] = None
-        #             INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
-        #             st.rerun()
-
-        #         ITEM_2EDIT = st.selectbox("FIELD", options=list(st.session_state.DB_DATA.keys()), label_visibility='collapsed')
-        #         @st.experimental_dialog(title="❓")
-        #         def EDIT_DATA():
-        #             NEW_DATA = st.text_area("JSON")
-        #             if st.button("CHECK", use_container_width=True):
-        #                 try:
-        #                     DATA = {ITEM_2EDIT: eval(NEW_DATA)}
-        #                     st.json(json.dumps(DATA))
-
-        #                 except:
-        #                     st.warning("Value not valid")
-        #             if st.button("CONFIRM", use_container_width=True):
-        #                 print(eval(NEW_DATA))
-        #                 st.rerun()
-
-
-        #         if st.button("EDIT FIELD", use_container_width=True):
-        #             EDIT_DATA()
-        #         on = st.toggle(f"🔒", value=True)
-
-        #         if st.button(f"{USUAL_ICONS.DELETE.value}DELETE FIELD", use_container_width=True, type='primary', disabled=on):
-        #             print('BORRAMOS:', ITEM_2EDIT)
-        #             # st.session_state.DB_DATA.pop(ITEM_2EDIT)
-        #             # INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
-        #             st.rerun()
-        #         # YESNOBOX(f"DO YOU WANT TO DELETE THIS ITEM?\n-> {FIELD_2DEL}", foo)
-
+        DB_EDITOR("MODELS", MODEL_ID, st.session_state.DB_DATA)

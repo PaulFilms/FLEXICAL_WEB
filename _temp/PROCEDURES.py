@@ -24,11 +24,8 @@ from db import *
 if 'LOGIN_STATUS' not in st.session_state:
     st.session_state.LOGIN_STATUS = None
 
-# if SSTATE.LOGIN_STATUS not in st.session_state:
-#     st.session_state[SSTATE.LOGIN_STATUS] = None
-
-if SSTATE.PROCEDURES_COUNT not in st.session_state:
-    st.session_state[SSTATE.PROCEDURES_COUNT] = 1
+if 'PROCEDURES' not in st.session_state:
+    st.session_state.PROCEDURES = 1
 
 if 'DB_DATA' not in st.session_state:
     st.session_state.DB_DATA = None
@@ -151,7 +148,7 @@ col12, col22 = st.columns(2)
 
 with col12:
     # print(SQL_PROCEDURES(1))
-    PROCEDURE_ID = st.selectbox("🎛️ PROCEDURE Id", options=[procedure['Id'] for procedure in SQL_PROCEDURES(st.session_state[SSTATE.PROCEDURES_COUNT])], index=None, label_visibility='collapsed')
+    PROCEDURE_ID = st.selectbox("🎛️ PROCEDURE Id", options=[procedure['Id'] for procedure in SQL_PROCEDURES(st.session_state.PROCEDURES)], index=None, label_visibility='collapsed')
 
 with col22:
     if st.button("📄 SHOW DOCUMENT", use_container_width=True):

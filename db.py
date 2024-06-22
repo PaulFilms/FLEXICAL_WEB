@@ -1,5 +1,5 @@
 '''
-FLEXICAL v3 | DB
+FLEXICAL v3 | DATABASE
 
 `SUPABASE INFO:`
     pip install st-supabase-connection
@@ -10,6 +10,7 @@ FLEXICAL v3 | DB
 
 ## PYTHON LIBRARIES
 import os, json, sqlite3
+from datetime import datetime
 from dataclasses import dataclass, asdict, fields
 from enum import Enum
 from typing import TypedDict
@@ -20,7 +21,7 @@ import streamlit as st
 from st_supabase_connection import SupabaseConnection, execute_query
 
 ## INTERNAL
-from menu import *
+
 
 
 ## DB CONNECTION
@@ -71,6 +72,10 @@ class DB:
 ## DB QUERIES
 ## __________________________________________________________________________________________________
 
+def GET_FIRM() -> str:
+    date_now = datetime.now().strftime("%Y-%m-%d / %H:%M")
+    return f"{st.session_state.LOGIN_STATUS} [{date_now}]"
+
 def SQL_BY_ROW(TABLE: str, FIELD: str, VALUE):
     return execute_query(conn.table(TABLE).select('*').eq(FIELD, VALUE)).data
 
@@ -80,9 +85,6 @@ def SQL_ID_COUNT(TABLE: str, ID: str) -> int:
 def SQL_SELECT_COLUMN(TABLE: str, COLUMN: str) -> list:
     SQL = execute_query(conn.table(TABLE).select(COLUMN).order(COLUMN))
     return [data[COLUMN] for data in SQL.data]
-
-def SQL_INSERT(TABLE: str, VALUES: dict) -> None:
-    execute_query(conn.table(TABLE).insert([VALUES]), ttl=0)
 
 @st.cache_resource
 def SQL_DEVICE_TYPES(COUNT: int):
@@ -120,8 +122,17 @@ def SQL_COMPANIES(COUNT: int):
     SQL = execute_query(conn.table("DEVICES").select('*').order("Id"), ttl="10m")
     return SQL.data
 
+def SQL_INSERT(TABLE: str, VALUES: dict) -> None:
+    execute_query(conn.table(TABLE).insert([VALUES]), ttl=0)
+
+def SQL_UPDATE_ID(TABLE: str, ID, FIELD: tuple[str, any]):
+    execute_query(conn.table(TABLE).update({FIELD[0]: FIELD[1], "FIRM": GET_FIRM()}).eq("Id", ID), ttl=0)
+    if TABLE not in st.session_state:
+        st.session_state[TABLE] = 1
+    st.session_state[TABLE] += 1
+
 def SQL_UPDATE_DB(TABLE: str, ID, DB: dict) -> None:
-    execute_query(conn.table(TABLE).update({"DB": json.dumps(DB)}).eq("Id", ID), ttl=0)
+    execute_query(conn.table(TABLE).update({"DB": json.dumps(DB), "FIRM": GET_FIRM()}).eq("Id", ID), ttl=0)
     if TABLE not in st.session_state:
         st.session_state[TABLE] = 1
     st.session_state[TABLE] += 1

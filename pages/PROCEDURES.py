@@ -1,5 +1,5 @@
 '''
-FLEXICAL v3 | ...
+FLEXICAL v3 | PROCEDURES
 
 '''
 
@@ -61,9 +61,6 @@ tbl_cmc_config={
 ## PAGE
 ## __________________________________________________________________________________________________
 
-
-## SIDEBAR & BASIC COMPONENTS
-# st.logo(os.path.join(path_resources, r"LOGO2.svg"))
 SIDEBAR()
 
 st.text("PROCEDURE Id")
@@ -77,8 +74,9 @@ if PROCEDURE_ID:
     SQL = SQL_BY_ROW('PROCEDURES', "Id", PROCEDURE_ID)
 
     with col22:
+        # BUG
         if st.button("📄 SHOW DOCUMENT", use_container_width=True):
-            @st.experimental_dialog("📄 DOCUMENT", width='large')
+            @st.experimental_dialog("📄 DOCUMENT **INCOMPLETE", width='large')
             def DOCUMENT():
                 MD = r'''
                 ## PROCEDURE Id
@@ -142,7 +140,8 @@ if PROCEDURE_ID:
         st.subheader('DATA:', divider='blue')
 
         tx_title = st.text_input(label='DEFAULT TEST TITLE', value=CURRENT_PROCEDURE["TITLE"])
-        tx_info = st.text_area(label='INFO', value=CURRENT_PROCEDURE["INFO"])
+        # tx_info = st.text_area(label='INFO', value=CURRENT_PROCEDURE["INFO"])
+        INFO_EDITOR("PROCEDURES", PROCEDURE_ID, CURRENT_PROCEDURE["INFO"])
 
 
 
@@ -163,7 +162,8 @@ if PROCEDURE_ID:
         ## __________________________________________________________________________________________________
 
         st.text("") # SEPARATOR
-        st.markdown(''':blue-background[💊 STANDARDS:]''')
+        # st.markdown(''':blue-background[💊 STANDARDS:]''')
+        st.subheader('STANDARDS:', divider='blue')
 
         if not st.session_state.DB_DATA.get('STANDARDS'):
             st.session_state.DB_DATA['STANDARDS'] = dict()
@@ -212,58 +212,16 @@ if PROCEDURE_ID:
         ## __________________________________________________________________________________________________
 
         st.text("") # SEPARATOR
-        st.markdown(''':blue-background[💊 CMC:]''')
+        # st.markdown(''':blue-background[💊 CMC:]''')
+        st.subheader('CMC:', divider='blue')
 
         if not st.session_state.DB_DATA.get('CMC'):
             st.session_state.DB_DATA['CMC'] = dict()
 
         DF_CMC = pd.DataFrame(st.session_state.DB_DATA['CMC'], columns=list(tbl_cmc_config.keys()))
-        DF_CMC['RANGE1_MIN'] = DF_CMC['RANGE1_MIN'].astype(float)
-        DF_CMC['RANGE1_MAX'] = DF_CMC['RANGE1_MAX'].astype(float)
-        DF_CMC['RANGE2_MIN'] = DF_CMC['RANGE2_MIN'].astype(float)
-        DF_CMC['RANGE2_MAX'] = DF_CMC['RANGE2_MAX'].astype(float)
-        DF_CMC['EVALUATION'] = DF_CMC['EVALUATION'].astype(str)
-        DF_CMC['C1'] = DF_CMC['C1'].astype(float)
-        DF_CMC['C2'] = DF_CMC['C2'].astype(float)
-        DF_CMC['C3'] = DF_CMC['C3'].astype(float)
-        DF_CMC = DF_CMC.reset_index()
-        del DF_CMC['index']
+        TBL_CMC, BTN_UPDATE = TBL_EDITOR(DF_CMC)
 
-        TBL_CMC = st.data_editor(
-            DF_CMC,
-            hide_index=True,
-            num_rows='dynamic',
-            column_config=tbl_cmc_config,
-            use_container_width=True
-        )
-
-        with st.popover(USUAL_ICONS.EXPANDER.value):
-            st.button("UPLOAD", use_container_width=True)
-            st.toggle('CHECKER')
-
-
-
-        try:
-            col13, col23, col33 = st.columns(3)
-            with col13:
-                VALUE1 = st.number_input("VALUE1", min_value=TBL_CMC['RANGE1_MIN'].min(), max_value=TBL_CMC['RANGE1_MAX'].max(), label_visibility='collapsed', step=0.0001)
-                # VALUE1 = st.text_input("VALUE1", value="0.0", label_visibility='collapsed') # min_value=TBL_CMC['RANGE1_MIN'].min(), max_value=TBL_CMC['RANGE1_MAX'].max(), step=0.0001)
-            with col23:
-                VALUE2 = st.number_input("VALUE2", min_value=TBL_CMC['RANGE2_MIN'].min(), max_value=TBL_CMC['RANGE2_MAX'].max(), label_visibility='collapsed', step=0.0001)
-                # VALUE2 = st.text_input("VALUE2", value=None, label_visibility='collapsed', disabled=pd.isna(TBL_CMC['RANGE2_MIN'].min())) # min_value=TBL_CMC['RANGE2_MIN'].min(), max_value=TBL_CMC['RANGE2_MAX'].max(), step=0.0001)
-                
-                with col33:
-                    VALUE = TABLE_DATA.GET_VALUE(TBL_CMC, VALUE1, VALUE2)
-                    if VALUE:
-                        # st.text(f"RESULT: {VALUE:.2E}")
-                        html = '''<div style="text-align: right;">'''
-                        html += f"RESULT:  {VALUE:.2E}"
-                        html += '''</div>'''
-                        st.markdown(html, unsafe_allow_html=True)
-        except:
-            st.warning(USUAL_ICONS.WARNINNG.value)
-
-        if st.button(USUAL_ICONS.UPDATE.value + " UPDATE"):
+        if BTN_UPDATE:
             if len(TBL_CMC) == 0:
                 st.session_state.DB_DATA['CMC'] = {}
             else:
@@ -272,7 +230,10 @@ if PROCEDURE_ID:
             st.toast("🏁 CMC Updated")
 
 
+
         ## PYDATA
+        ## __________________________________________________________________________________________________
+
         st.text("")
         st.text("")
         st.subheader('PYDATA:', divider='blue')
@@ -281,30 +242,15 @@ if PROCEDURE_ID:
         # [➡️ PYDATA](#pydata)
         # """, unsafe_allow_html=True)
 
-        # if WIDGETS.PYDATA.name not in st.session_state:
-        #     st.session_state[WIDGETS.PYDATA.name] = ""
+        PYDATA_EDITOR("PROCEDURES", PROCEDURE_ID, CURRENT_PROCEDURE["PYDATA"])
 
-        with st.popover(USUAL_ICONS.EXPANDER.value + "  OPTIONS:"):
-            ## EDIT TEXT
-            if st.button("EDIT PYDATA CODE", use_container_width=True):
-                @st.experimental_dialog("EDIT PYDATA CODE", width="large")
-                def EDIT_PYDATA():
-                    new_code = st.text_area('CODE', value=CURRENT_PROCEDURE["PYDATA"])
-                    # if st.button("UPDATE", use_container_width=True):
-                    #     st.session_state[WIDGETS.PYDATA.name] = new_code
-                    #     st.rerun()
-                EDIT_PYDATA()
 
-            ## EDIT BY FILE
-            # if "uploaded_file" not in st.session_state:
-            #     st.session_state["uploaded_file"] = None
+        ## DB DATA JSON
+        ## __________________________________________________________________________________________________
 
-            # uploaded_file = st.file_uploader("Choose a file", accept_multiple_files=False, type='py', key="file_uploader")
-            # if uploaded_file is not None:
-            #     # To convert to a string based IO:
-            #     stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-            #     string_data = stringio.read()
-            #     st.session_state[WIDGETS.PYDATA.name] = string_data
-            #     st.session_state["uploaded_file"] = None
+        st.text("") # SEPARATOR
+        st.text("") # SEPARATOR
+        # st.markdown(''':blue-background[💊 DB DATA:]''')
+        st.subheader('JSON DB DATA:', divider='blue')
 
-        tx_pydata = st.code(CURRENT_PROCEDURE["PYDATA"], language='python')
+        DB_EDITOR("MODELS", PROCEDURE_ID, st.session_state.DB_DATA)
