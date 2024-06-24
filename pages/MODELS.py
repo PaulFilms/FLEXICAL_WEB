@@ -249,9 +249,9 @@ if MODEL_ID:
 
         st.text("") # SEPARATOR
         # st.markdown(''':blue-background[💊 INFO & DETAILS:]''')
-        st.subheader('MODEL INFO:', divider='blue')
+        st.subheader(body='MODEL INFO:', divider='blue')
 
-        INFO_EDITOR("MODELS", MODEL_ID, CURRENT_MODEL["INFO"])
+        INFO_EDITOR(TABLE="MODELS", ID=MODEL_ID, INFO=CURRENT_MODEL["INFO"])
 
 
         ## SPECIFICATIONS
@@ -259,7 +259,7 @@ if MODEL_ID:
 
         st.text("") # SEPARATOR
         # st.markdown(''':blue-background[💊 SPECIFICATIONS:]''')
-        st.subheader('SPECIFICATIONS:', divider='blue')
+        st.subheader(body='SPECIFICATIONS:', divider='blue')
 
         if not st.session_state.DB_DATA.get('SPECIFICATIONS'):
             st.session_state.DB_DATA['SPECIFICATIONS'] = dict()
@@ -321,7 +321,7 @@ if MODEL_ID:
                 else:
                     st.session_state.DB_DATA['SPECIFICATIONS'][CURRENT_PROCEDURE] = TBL_SPECIFICATION.to_dict()
                 SQL_UPDATE_DB("MODELS", MODEL_ID, st.session_state.DB_DATA)
-                st.toast("🏁 SPECIFICATIONS Updated")
+                st.toast(body="🏁 SPECIFICATIONS Updated")
                 # st.rerun()
 
 

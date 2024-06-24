@@ -15,7 +15,7 @@ pip install streamlit-authenticator
 import os, json
 from io import StringIO
 from typing import Union
-
+from dataclasses import dataclass
 from enum import Enum, auto
 
 ## IMPORTED LIBRARIES
@@ -112,8 +112,8 @@ def SIDEBAR():
         st.sidebar.text("")
         with st.sidebar.expander("__✏️ EDITORS__", expanded=True):
             st.text("")
-            st.page_link(r"pages/MODELS.py", label="MODELS") # , icon="🚗"
             st.page_link(r"pages/PROCEDURES.py", label="PROCEDURES", use_container_width=True)
+            st.page_link(r"pages/MODELS.py", label="MODELS") # , icon="🚗"
             st.page_link(r"pages/TEMPLATES.py", label="TEMPLATES", use_container_width=True)
             st.page_link(r"pages/CALIBRATIONS.py", label="CALIBRATIONS", use_container_width=True)
 
@@ -125,15 +125,15 @@ def INFO_EDITOR(TABLE: str, ID: str, INFO: str) -> None:
     col12, col22 = st.columns([9,1])
     with col12:
         with st.container(border=True):
-            st.markdown(INFO)
+            st.markdown(body=INFO)
     with col22:
-        with st.popover(USUAL_ICONS.EXPANDER.value):
-            btn_editor = st.button('✏️ EDITOR', use_container_width=True, key='INFO_EDITOR')
+        with st.popover(label=USUAL_ICONS.EXPANDER.value):
+            btn_editor = st.button(label='✏️ EDITOR', use_container_width=True, key='INFO_EDITOR')
     
-    @st.experimental_dialog('✏️ EDITOR', width='large')
+    @st.experimental_dialog(title='✏️ EDITOR', width='large')
     def EDITOR():
-        NEW_INFO = st.text_area("", INFO, height=400)
-        if st.button("🔄 UPDATE"):
+        NEW_INFO = st.text_area(label="tx_markdown_raw", value=INFO, height=400, label_visibility='collapsed')
+        if st.button(label="🔄 UPDATE"):
             try:
                 SQL_UPDATE_ID(TABLE, ID, ("INFO", NEW_INFO))
                 st.session_state[TABLE] += 1
@@ -359,7 +359,6 @@ def PYDATA_EDITOR(TABLE: str, ID: str, PYDATA: str):
                 st.rerun()
             except Exception as e:
                 INFOBOX(e)
-            st.rerun()
 
     if btn_editor: EDITOR()
 
@@ -451,3 +450,128 @@ class TABLE_DATA:
             print("TBL_CALC ERROR:")
             print(e)
             return None
+
+
+@dataclass
+class UNIT:
+    '''
+    Internal class to define the equivalent value of a unit with its base unit and its multiplication factor
+    '''
+    unit: str
+    factor: int
+
+class UNITS(Enum):
+    '''
+    Enumeration class with some units in text format with their equivalent in base unit
+    
+    `Examples:`
+    - V = UNIT("V", 1)
+    - kV = UNIT("V", 1e3)
+    '''
+    ## VOLTS
+    nV = UNIT("V", 1e-9)
+    𝝻V = UNIT("V", 1e-6)
+    uV = UNIT("V", 1e-6)
+    mV = UNIT("V", 1e-3)
+    V = UNIT("V", 1)
+    kV = UNIT("V", 1e3)
+    MV = UNIT("V", 1e6)
+    GV = UNIT("V", 1e9)
+    ## AMPS
+    nA = UNIT("A", 1e-9)
+    𝝻A = UNIT("A", 1e-6)
+    uA = UNIT("A", 1e-6)
+    mA = UNIT("A", 1e-3)
+    A = UNIT("A", 1)
+    kA = UNIT("A", 1e3)
+    MA = UNIT("A", 1e6)
+    ## OHMS
+    nOhm = UNIT("Ω", 1e-9)
+    𝝻Ohm = UNIT("Ω", 1e-6)
+    uOhm = UNIT("Ω", 1e-6)
+    mOhm = UNIT("Ω", 1e-3)
+    Ohm = UNIT("Ω", 1)
+    kOhm = UNIT("Ω", 1e3)
+    MOhm = UNIT("Ω", 1e6)
+    GOhm = UNIT("Ω", 1e9)
+    nΩ = UNIT("Ω", 1e-9)
+    𝝻Ω = UNIT("Ω", 1e-6)
+    uΩ = UNIT("Ω", 1e-6)
+    mΩ = UNIT("Ω", 1e-3)
+    Ω = UNIT("Ω", 1)
+    kΩ = UNIT("Ω", 1e3)
+    MΩ = UNIT("Ω", 1e6)
+    GΩ = UNIT("Ω", 1e9)
+    ## WATTS
+    𝝻W = UNIT("W", 1e-6)
+    uW = UNIT("W", 1e-6)
+    mW = UNIT("W", 1e-3)
+    W = UNIT("W", 1)
+    kW = UNIT("W", 1e3)
+    MW = UNIT("W", 1e6)
+    ## HERTZ
+    nHz = UNIT("Hz", 1e-9)
+    𝝻Hz = UNIT("Hz", 1e-6)
+    uHz = UNIT("Hz", 1e-6)
+    mHz = UNIT("Hz", 1e-3)
+    Hz = UNIT("Hz", 1)
+    kHz = UNIT("Hz", 1e3)
+    MHz = UNIT("Hz", 1e6)
+    GHz = UNIT("Hz", 1e9)
+    ## SECONDS
+    ns = UNIT("s", 1e-9)
+    𝝻s = UNIT("s", 1e-6)
+    us = UNIT("s", 1e-6)
+    ms = UNIT("s", 1e-3)
+    s = UNIT("s", 1)
+    ## dB
+    dB = UNIT("dB", 1)
+    dBm = UNIT("dBm", 1)
+    dBc = UNIT("dBc", 1)
+    
+    @classmethod
+    def to_base(cls, value: float, unit: Union['UNITS', str]) -> float:
+        '''
+        Specific Function to convert a value to base unit
+
+        `Args:`
+            value <float>: Selected value
+            unit <str> | <UNITS>: Unit of selected value
+        
+        `Retrurns:`
+            <float> Converted value in base unit
+        
+        `Examples: `
+            - value=123.456, unit="mW" = 0.123456 (W)
+            - value=123.456, unit=UNITS.mW = 0.123456 (W)
+        '''
+        unit_type = type(unit)
+        if unit_type == str:
+            return value * cls[unit].value.factor
+        elif unit_type == UNITS:
+            return value * unit.value.factor
+    
+    @classmethod
+    def from_base(cls, base_value: Union[int, float], unit: Union['UNITS', str]) -> float:
+        '''
+        Specific Function to convert a value from base unit
+
+        `Args:`
+            value <float>: Selected value
+            unit <str> | <UNITS>: Unit of selected value
+        
+        `Retrurns:`
+            <float> Converted value in selected unit
+        
+        `Examples: `
+            - value=123.456, unit="mW" = 123456.0 (mW)
+            - value=123.456, unit=UNITS.mW = 123456.0 (mW)
+        '''
+        if isinstance(base_value, str):
+            return 0.0
+        if isinstance(unit, type(None)):
+            return 0.0
+        if isinstance(unit, str):
+            return base_value / cls[unit].value.factor
+        if isinstance(unit, UNITS):
+            return base_value / unit.value.factor

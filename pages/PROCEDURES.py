@@ -6,7 +6,8 @@ FLEXICAL v3 | PROCEDURES
 ## PYTHON LIBRARIES
 import os
 from time import sleep
-from typing import TypedDict
+from typing import TypedDict, Dict
+from dataclasses import dataclass, asdict
 
 ## IMPORTED LIBRARIES
 import streamlit as st
@@ -45,6 +46,35 @@ class PROCEDURE:
         PYDATA: str
         FIRM: str
 
+    @dataclass
+    class dict_parameters:
+        PARAMETERS: str = None
+        MEASURE: str = None
+        UNCERTAINTY: str = None
+        LIMIT_ERROR: str = None
+        def toDict(self) -> Dict[str, any]:
+            '''
+            Get a python dictionary from the object
+            '''
+            return asdict(self)
+
+    @dataclass
+    class dict_units:
+        RANGE: str = None
+        VALUE1: str = None
+        VALUE2: str = None
+        MEASURE: str = None
+        DEVIATION: str = None
+        SPECIFICATION: str = None
+        UNCERTAINTY: str = None
+        # RESULT: str = None
+        CMC: str = None
+        def toDict(self) -> Dict[str, any]:
+            '''
+            Get a python dictionary from the object
+            '''
+            return asdict(self)
+
 tbl_cmc_config={
     'RANGE1_MIN': st.column_config.NumberColumn(default=0.0, format="%.2e"), # min_value=-1e-16, max_value=1e16),
     'RANGE1_MAX': st.column_config.NumberColumn(default=0.0, format="%.2e"), # min_value=-1e-16, max_value=1e16),
@@ -56,6 +86,45 @@ tbl_cmc_config={
     'C3': st.column_config.NumberColumn(format="%.2e", default=None, min_value=-1e-16, max_value=1e16), # 0.0
 }
 
+def REPORT_FORMAT(ID: str, DB: dict) -> None:
+    col12, col22 = st.columns([9,1])
+    with col12:
+        with st.container(border=True):
+            st.json(DB["REPORT_FORMAT"], expanded=False)
+    with col22:
+        with st.popover(USUAL_ICONS.EXPANDER.value):
+            btn_editor = st.button('✏️ EDITOR', use_container_width=True, key='DB_EDITOR_REPORT_FORMAT')
+
+    @st.experimental_dialog('✏️ EDITOR', width='small')
+    def EDITOR():
+        st.text("PARAMETERS")
+        serie_parameters = st.data_editor(
+            data=pd.Series(PROCEDURE.dict_parameters(**DB["REPORT_FORMAT"]['PARAMETERS']).toDict(), name="VALUE"),
+            column_config={
+                "VALUE": st.column_config.TextColumn(),
+            },
+            use_container_width=True
+        )
+        st.text("UNITS")
+        serie_units = st.data_editor(
+            data=pd.Series(PROCEDURE.dict_units(**DB["REPORT_FORMAT"]['UNITS']).toDict(), name="VALUE"),
+            column_config={
+                "VALUE": st.column_config.SelectboxColumn(options=[unit.name for unit in UNITS if unit.value.factor == 1]),
+            },
+            use_container_width=True
+        )
+        if st.button(label="🔄 UPDATE"):
+            DB["REPORT_FORMAT"]["PARAMETERS"] = serie_parameters.to_dict()
+            DB["REPORT_FORMAT"]["UNITS"] = serie_units.to_dict()
+            try:
+                SQL_UPDATE_DB("PROCEDURES", ID, DB)
+                st.session_state["PROCEDURES"] += 1
+                st.rerun()
+            except Exception as e:
+                INFOBOX(e)
+
+    st.text("")
+    if btn_editor: EDITOR()
 
 
 ## PAGE
@@ -132,6 +201,7 @@ if PROCEDURE_ID:
         else:
             st.session_state.DB_DATA = dict()
 
+
         ## DATA
         ## __________________________________________________________________________________________________
 
@@ -144,7 +214,6 @@ if PROCEDURE_ID:
         INFO_EDITOR("PROCEDURES", PROCEDURE_ID, CURRENT_PROCEDURE["INFO"])
 
 
-
         ## REPORT FORMATS
         ## __________________________________________________________________________________________________
 
@@ -152,10 +221,16 @@ if PROCEDURE_ID:
         st.text("")
         st.subheader('REPORT FORMATS:', divider='blue')
 
-        st.text("") # SEPARATOR
-        st.markdown(''':blue-background[💊 REPORT FORMATS:]''')
+        # st.text("") # SEPARATOR
+        # st.markdown(''':blue-background[💊 REPORT FORMATS:]''')
 
-        st.text("REPORT FORMATS")
+        if not st.session_state.DB_DATA.get("REPORT_FORMAT"):
+            st.session_state.DB_DATA["REPORT_FORMAT"] = {
+                "PARAMETERS": PROCEDURE.dict_parameters().toDict(),
+                "UNITS": PROCEDURE.dict_units().toDict(),
+            }
+
+        REPORT_FORMAT(PROCEDURE_ID, st.session_state.DB_DATA)
 
 
         ## STANDARDS

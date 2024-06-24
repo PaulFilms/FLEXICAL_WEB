@@ -3,6 +3,10 @@
 # FLEXICAL_WEB
 Web framework to manage the main data of application
 
+## WARNINGS:
+- `ALPHA Version / INCOMPLETE`
+
+
 ## TASK:
 - Complete LogIn Functions
     * Sign Up form
@@ -28,5 +32,3 @@ Web framework to manage the main data of application
 
 - ¿? Eliminar pip st-supabase-connection, y usar el sistema de supabase de streamlit
 
-## WARNINGS:
-- `ALPHA Version / INCOMPLETE`
