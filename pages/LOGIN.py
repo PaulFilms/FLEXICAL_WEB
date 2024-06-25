@@ -12,7 +12,7 @@ Ejemplo1:
 import streamlit as st
 
 ## INTERNAL
-from menu import *
+from app import *
 from db import *
 
 
@@ -37,7 +37,7 @@ with col23:
     PASSWORD = st.text_input("PASSWORD *", type='password')
     st.text("") # SEPARATOR
     BTN = st.button(label="🪪 LOG IN", use_container_width=True)
-    st.page_link(page=r"app.py", label="Forgot your password?")
+    st.page_link(page=r"pages/HOME.py", label="Forgot your password?")
 
     if BTN:
         if not USERNAME or USERNAME == str():
@@ -52,10 +52,13 @@ with col23:
                 st.session_state.LOGIN_STATUS = USER
             else:
                 INFOBOX("INVALID USER/MAIL")
+        
+        ## PASSWORD CHECK
         # if PASSWORD == None or PASSWORD == str():
             # INFOBOX(PASSWORD)
 
+        ## LOGIN
         if st.session_state.LOGIN_STATUS:
             sleep(3)
-            st.switch_page(r"app.py")
+            st.switch_page(r"pages/HOME.py")
     

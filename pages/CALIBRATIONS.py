@@ -9,7 +9,7 @@ FLEXICAL v3 | CALIBRATIONS
 import streamlit as st
 
 ## INTERNAL
-from menu import *
+from app import *
 from db import *
 
 
@@ -33,6 +33,14 @@ if 'LOGIN_STATUS' not in st.session_state:
 
 st.logo(os.path.join(path_resources, r"LOGO2.svg"))
 SIDEBAR()
+
+with st.container(border=True):
+    st.caption("""
+        INCOMPLETE!! 
+        In the following updates, this page will manage calibrations, projects/campaigns, and everything related to calibrations
+    """)
+
+st.divider()
 
 st.text('✏️ SELECT CALIBRATION Id')
 

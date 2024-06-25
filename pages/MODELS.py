@@ -15,7 +15,7 @@ import streamlit as st
 import pandas as pd
 
 ## INTERNAL
-from menu import *
+from app import *
 from db import *
 
 

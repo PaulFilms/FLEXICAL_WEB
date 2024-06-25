@@ -29,5 +29,9 @@ dmypy.json
 cython_debug/
 
 # Streamlit
-.devcontainer
+.devcontainer/
 secrets.toml
+
+
+# My Develop
+_temp.zip

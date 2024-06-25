@@ -20,8 +20,6 @@ from time import sleep
 import streamlit as st
 from st_supabase_connection import SupabaseConnection, execute_query
 
-## INTERNAL
-
 
 
 ## DB CONNECTION
@@ -69,12 +67,19 @@ class DB:
         def toJSON(self) -> str:
             return json.dumps(asdict(self))
 
-## DB QUERIES
+
+
+## FUNCTIONS
 ## __________________________________________________________________________________________________
 
 def GET_FIRM() -> str:
     date_now = datetime.now().strftime("%Y-%m-%d / %H:%M")
     return f"{st.session_state.LOGIN_STATUS} [{date_now}]"
+
+
+
+## DB QUERIES
+## __________________________________________________________________________________________________
 
 def SQL_BY_ROW(TABLE: str, FIELD: str, VALUE):
     return execute_query(conn.table(TABLE).select('*').eq(FIELD, VALUE)).data
@@ -117,6 +122,12 @@ def SQL_PROCEDURES(COUNT: int) -> list:
     return SQL.data
 
 @st.cache_resource
+def SQL_CUSTOMERS(COUNT: int):
+    print(f"SQL CUSTOMERS ({COUNT}):", GET_FIRM())
+    SQL = execute_query(conn.table("CUSTOMERS").select('*').order("Id"), ttl="10m")
+    return SQL.data
+
+@st.cache_resource
 def SQL_COMPANIES(COUNT: int):
     print(f"SQL DEVICES ({COUNT}):", GET_FIRM())
     SQL = execute_query(conn.table("DEVICES").select('*').order("Id"), ttl="10m")
@@ -136,13 +147,6 @@ def SQL_UPDATE_DB(TABLE: str, ID, DB: dict) -> None:
     if TABLE not in st.session_state:
         st.session_state[TABLE] = 1
     st.session_state[TABLE] += 1
-
-@st.cache_resource
-def SQL_CUSTOMERS(COUNT: int):
-    print(f"SQL CUSTOMERS ({COUNT}):", GET_FIRM())
-    SQL = execute_query(conn.table("CUSTOMERS").select('*').order("Id"), ttl="10m")
-    return SQL.data
-
 
 def GET_LOCAL_DB() -> None:
     path_file = "flexical.db"

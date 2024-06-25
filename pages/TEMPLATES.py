@@ -5,6 +5,7 @@ FLEXICAL v3 | ...
 
 ## PYTHON LIBRARIES
 import os
+from typing import Dict
 from dataclasses import asdict
 from enum import Enum
 
@@ -13,85 +14,9 @@ import streamlit as st
 import pandas as pd
 
 ## INTERNAL
-from menu import *
+from app import *
 from db import *
 
-
-## MENU
-## __________________________________________________________________________________________________
-
-def TEST_EDITOR(DB: dict) -> None:
-    
-    col_config = {
-        # "✔️": st.column_config.CheckboxColumn(width='small'),
-        "TEST": st.column_config.TextColumn(),
-        "TEST_INFO": st.column_config.TextColumn(),
-        "CONFIG": st.column_config.TextColumn(),
-        "PROCEDURE_ID": st.column_config.SelectboxColumn(options=[procedure for procedure in SQL_SELECT_COLUMN("PROCEDURES", "Id")]),
-    }
-
-    serie = {
-        "TEST": 'st.colu',
-        "TEST_INFO": 'st',
-        "CONFIG": 'st.co',
-        "PROCEDURE_ID": "VDC_METERS"
-    }
-    l = [serie]
-
-    DF = pd.DataFrame(l, columns=list(col_config.keys()))
-    # DF.insert(0, "✔️", False)
-
-    col12, col22 = st.columns([9,1])
-    with col12:
-        TBL_TEST = st.dataframe(
-            data=DF, 
-            hide_index=True,
-            # num_rows='dynamic',
-            column_config=col_config,
-            use_container_width=True,
-            selection_mode='multi-row',
-        )
-
-        people = TBL_TEST.selection
-        # filtered_df = DF.iloc[people]
-        # st.dataframe(
-        #     filtered_df,
-        #     column_config=col_config,
-        #     use_container_width=True,
-        # )
-        st.write(TBL_TEST.selection)
-
-        # new_tbl = TBL_TEST[TBL_TEST["✔️"]]
-        # new_tbl = new_tbl.reset_index()
-        # del new_tbl['index']
-        # del new_tbl["✔️"]
-        # st.write(new_tbl)
-
-    with col22:
-        with st.popover(label=USUAL_ICONS.EXPANDER.value):
-            btn_test_add = st.button(label='➕ ADD TEST', use_container_width=True)
-            btn_test_del = st.button(label='➖ DEL TEST', use_container_width=True)
-    
-    if btn_test_add:
-        # @st.experimental_dialog(title='✏️ EDITOR', width='large')
-        # def FORM():
-        #     
-        pass
-        
-    btn_update = st.button(USUAL_ICONS.UPDATE.value + " UPDATE", key='btn_update')
-
-
-    # print(TBL_TEST)
-
-    # # Filter the dataframe using the temporary column, then drop the column
-    # selected_rows = TBL_TEST[TBL_TEST["SELECT"]]
-    # # selected_rows = TBL_TEST.drop(".", axis=1)
-
-    # SELECTED: str = None
-    # if len(selected_rows) == 1:
-    #     SELECTED = selected_rows.iloc[0]
-
-    # return SELECTED
 
 
 ## SESSION STATES
@@ -100,8 +25,8 @@ def TEST_EDITOR(DB: dict) -> None:
 if 'LOGIN_STATUS' not in st.session_state:
     st.session_state.LOGIN_STATUS = None
 
-if 'PROCEDURES' not in st.session_state:
-    st.session_state.PROCEDURES = 1
+if 'TEMPLATES' not in st.session_state:
+    st.session_state.TEMPLATES = 1
 
 class TEMPLATE:
 
@@ -116,19 +41,144 @@ class TEMPLATE:
     @dataclass
     class DB:
         TEST_LIST: dict = None
+        def toDict(self) -> Dict[str, any]:
+            return asdict(self)
+    
+    @dataclass
+    class TEST:
+        TEST: str
+        PARAMETERS: str = None
+        CONFIG: str = None
+        INFO: str = None
+        PROCEDURE_ID: str = None
+        CALIBRATION: dict = None
+        def toDict(self) -> Dict[str, any]:
+            return asdict(self)
 
-        def toJSON(self) -> str:
-            return json.dumps(asdict(self))
+    class MEASURE(Enum):
+        RANGE = 0
+        VALUE1 = auto()
+        VALUE2 = auto()
+        # MEASURE = auto()
+        # DEVIATION = auto()
+        # SPECIFICATION = auto() # LIMIT OF ERROR
+        # UNCERTAINTY = auto()
+        # RESULT = auto()
+        # CMC = auto()
+        # ACQUISITIONS = auto() # Podria estar dentro de VALIDATION
+        # VALIDATION = auto() # K_FACTOR, PROCEDURE, STANDARDS
+
+## MENU
+## __________________________________________________________________________________________________
+
+def TEST_EDITOR(ID: str, DB: dict) -> None:
+    procedures = SQL_SELECT_COLUMN("PROCEDURES", "Id")
+
+    @st.experimental_dialog(title='✏️ EDITOR', width='small')
+    def FORM_NEW():
+        
+        PROCEDURE_ID = st.selectbox("PROCEDURE Id *", options=procedures, index=None)
+        title = str()
+        if PROCEDURE_ID:
+            title = SQL_BY_ROW("PROCEDURES", "Id", PROCEDURE_ID)[0]['TITLE']
+        TEST = st.text_input("TEST TITLE *", value=title)
+        PARAMETERS = st.text_input("TEST PARAMETERS")
+        CONFIG = st.text_input("CONFIG & CONNECTIONS")
+        INFO = st.text_area("INFO")
+        if st.button("➕ INSERT NEW TEST", key='btn_test_ADD'):
+            NEW_TEST = TEMPLATE.TEST(TEST, PARAMETERS, CONFIG, INFO, PROCEDURE_ID, CALIBRATION={})
+            DB["TEST_LIST"].append(NEW_TEST.toDict())
+            try:
+                SQL_UPDATE_DB("TEMPLATES", ID, DB)
+                st.session_state.TEMPLATES += 1
+                st.rerun()
+            except Exception as e:
+                INFOBOX(e)
+
+    @st.experimental_dialog(title='✏️ EDITOR', width='small')
+    def FORM_EDIT(TEST: TEMPLATE.TEST, loc):
+        indx = None
+        if TEST.PROCEDURE_ID in procedures:
+            indx = procedures.index(TEST.PROCEDURE_ID)
+        PROCEDURE_ID = st.selectbox("PROCEDURE Id", options=procedures, index=indx)
+        TITLE = st.text_input("TEST TITLE *", value=TEST.TEST)
+        PARAMETERS = st.text_input("TEST PARAMETERS", value=TEST.PARAMETERS)
+        CONFIG = st.text_input("CONFIG & CONNECTIONS", value=TEST.CONFIG)
+        INFO = st.text_area("INFO", value=TEST.INFO)
+        if st.button(USUAL_ICONS.UPDATE.value + " UPDATE", key='btn_test_update'):
+            EDIT_TEST = TEMPLATE.TEST(TITLE, PARAMETERS, CONFIG, INFO, PROCEDURE_ID, TEST.CALIBRATION)
+            DB["TEST_LIST"][loc] = EDIT_TEST.toDict()
+            try:
+                SQL_UPDATE_DB("TEMPLATES", ID, DB)
+                st.session_state.TEMPLATES += 1
+                st.rerun()
+            except Exception as e:
+                INFOBOX(e)
+
+    ## TABLE TEST
+    DATAFRAME = pd.DataFrame(DB['TEST_LIST'], columns=['TEST', 'PARAMETERS', 'CONFIG', 'INFO', 'PROCEDURE_ID'])
+
+    TBL_TEST = st.dataframe(
+        data=DATAFRAME, 
+        hide_index=True,
+        on_select="rerun", # Con esta opcion aparece el selector de fila
+        selection_mode=['single-row'], # "multi-column" "multi-row"
+        use_container_width=True,
+    )
+
+    col13, col23, col33 = st.columns(3)
+
+    with col13:
+        if st.button(label='➕ ADD TEST', use_container_width=True):
+            FORM_NEW()
+
+    if len(TBL_TEST.selection.rows) == 1:
+        loc = TBL_TEST.selection.rows[0]
+        test = TEMPLATE.TEST(**dict(DATAFRAME.loc[loc]))
+
+        print("LOAD TBL")
+        print(test)
+
+        with col23:
+            if st.button(label='✏️ EDIT TEST', use_container_width=True):
+                FORM_EDIT(test, loc)
+        
+        with col33:
+            if st.button(label='➖ DEL TEST', use_container_width=True):
+                del DB['TEST_LIST'][loc]
+                try:
+                    SQL_UPDATE_DB("TEMPLATES", ID, DB)
+                    st.session_state.TEMPLATES += 1
+                    st.rerun()
+                except Exception as e:
+                    INFOBOX(e)
+
+        st.text("")
+        tbl_cal_test = st.data_editor(
+            data=pd.DataFrame(test.CALIBRATION, columns=[field.name for field in TEMPLATE.MEASURE]),
+            use_container_width=True,
+            hide_index=True,
+            column_config={field.name: st.column_config.NumberColumn() for field in TEMPLATE.MEASURE}, 
+            num_rows='dynamic'
+        )
+        if st.button(USUAL_ICONS.UPDATE.value + " UPDATE", key='btn_tbl_update'):
+
+            DB["TEST_LIST"][loc]['CALIBRATION=None'] = tbl_cal_test.to_dict()
+            print("UPDATE TBL")
+            print(DB)
+            try:
+                SQL_UPDATE_DB("TEMPLATES", ID, DB)
+                st.session_state.TEMPLATES += 1
+                st.rerun()
+            except Exception as e:
+                INFOBOX(e)
+
+
 
 
 ## PAGE
 ## __________________________________________________________________________________________________
 
-# if not st.session_state.LOGIN_STATUS:
-#     st.switch_page(r"pages/LOGIN.py")
-
-## SIDEBAR & BASIC COMPONENTS
-# st.logo(os.path.join(path_resources, r"LOGO2.svg"))
 SIDEBAR()
 
 st.text('TEMPLATE Id')
@@ -144,15 +194,22 @@ with col22:
         FLTR_MANUFACTURER = st.selectbox("MANUFACTURER", options=SQL_SELECT_COLUMN("MANUFACTURERS", "Id"), index=None)
         FLTR_MODEL = st.selectbox("MODEL", options=SQL_SELECT_COLUMN("MODELS", "Id"), index=None)
 
-# FOOTER("FLEXICAL | TEMPLATES EDITOR")
-
 if TEMPLATE_ID:
     SQL = SQL_BY_ROW("TEMPLATES", "Id", TEMPLATE_ID)
     # st.json(SQL)
     CURRENT_TEMPLATE = TEMPLATE.TypeDict(**SQL[0])
-
-    if not CURRENT_TEMPLATE["DB"]:
-        CURRENT_TEMPLATE["DB"] = asdict(TEMPLATE.DB(TEST_LIST={}))
+    
+    ## DB DATA
+    CURRENT_DB: dict = None
+    if isinstance(CURRENT_TEMPLATE["DB"], str):
+        try:
+            CURRENT_DB = json.loads(CURRENT_TEMPLATE["DB"])
+        except:
+            CURRENT_DB = dict()
+    elif isinstance(CURRENT_TEMPLATE["DB"], dict):
+        CURRENT_DB = CURRENT_TEMPLATE["DB"]
+    else:
+        CURRENT_DB = dict()
 
 
     ## INFO
@@ -172,11 +229,11 @@ if TEMPLATE_ID:
     # st.markdown(''':blue-background[💊 CMC:]''')
     st.subheader('TEST LIST:', divider='blue')
 
-    if not CURRENT_TEMPLATE["DB"].get("TEST_LIST"):
-        CURRENT_TEMPLATE["DB"]["TEST_LIST"] = {}
+    if not CURRENT_DB.get("TEST_LIST"):
+        CURRENT_DB["TEST_LIST"] = []
 
-    selected = TEST_EDITOR(CURRENT_TEMPLATE["DB"])
-    st.write(selected)
+    selected = TEST_EDITOR(TEMPLATE_ID, CURRENT_DB)
+    # st.write(selected)
 
 
     ## PYDATA
@@ -190,7 +247,6 @@ if TEMPLATE_ID:
     # [➡️ PYDATA](#pydata)
     # """, unsafe_allow_html=True)
 
-    # st.write(CURRENT_TEMPLATE["PYDATA"])
     if not CURRENT_TEMPLATE["PYDATA"]:
         CURRENT_TEMPLATE["PYDATA"] = str()
     
@@ -213,16 +269,16 @@ if TEMPLATE_ID:
 ## Dataframe selections / https://docs.streamlit.io/develop/api-reference/data/st.dataframe
 ## __________________________________________________________________________________________________
 
-if "df" not in st.session_state:
-    st.session_state.df = pd.DataFrame(
-        np.random.randn(12, 5), columns=["a", "b", "c", "d", "e"]
-    )
+# if "df" not in st.session_state:
+#     st.session_state.df = pd.DataFrame(
+#         np.random.randn(12, 5), columns=["a", "b", "c", "d", "e"]
+#     )
 
-event = st.dataframe(
-    st.session_state.df,
-    key="data",
-    on_select="rerun",
-    selection_mode=["multi-row", "multi-column"],
-)
+# event = st.dataframe(
+#     st.session_state.df,
+#     key="data",
+#     on_select="rerun",
+#     selection_mode=["multi-row", "multi-column"],
+# )
 
-event.selection
+# event.selection
