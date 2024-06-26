@@ -14,7 +14,7 @@ pip install streamlit-authenticator
 ## PYTHON LIBRARIES
 import os, json
 from io import StringIO
-from typing import Union
+from typing import Union, Tuple
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -24,12 +24,12 @@ import numpy as np
 
 ## STREAMLIT
 import streamlit as st
-st.set_page_config(
-    page_title="FLEXICAL DEVELOPER",
-    page_icon=":guardsman:",
-    layout="wide", # "centered",
-    initial_sidebar_state= "auto" # "collapsed"
-)
+# st.set_page_config(
+#     page_title="FLEXICAL DEVELOPER",
+#     page_icon=":guardsman:",
+#     layout="wide", # "centered",
+#     initial_sidebar_state= "auto" # "collapsed"
+# )
 
 ## INTERNAL
 from db import SQL_UPDATE_ID, SQL_UPDATE_DB
@@ -181,7 +181,11 @@ def DATAFRAME_LIST(DATAFRAME: pd.DataFrame, COLUMN: str) -> tuple[pd.DataFrame, 
 
     return edited_df, SELECTED
 
-def TBL_EDITOR(DATAFRAME: pd.DataFrame):
+def TBL_EDITOR(DATAFRAME: pd.DataFrame) -> Tuple[st.data_editor, bool]:
+    '''
+    Render a st.data_editor with the basics fields to use for calculation
+    RANGE1, RANGE2, EVALUATION, C1, C2, C3 ...
+    '''
     with st.popover(USUAL_ICONS.EXPANDER.value):
         tg_format = st.toggle('FORMAT DECIMAL', value=False)
         tg_checker = st.toggle('CHECKER', value=False)

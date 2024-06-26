@@ -74,6 +74,10 @@ class TEMPLATE:
 def TEST_EDITOR(ID: str, DB: dict) -> None:
     procedures = SQL_SELECT_COLUMN("PROCEDURES", "Id")
 
+    print("TEST_EDITOR")
+    print("DB")
+    print(DB)
+
     @st.experimental_dialog(title='✏️ EDITOR', width='small')
     def FORM_NEW():
         
@@ -134,10 +138,10 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
 
     if len(TBL_TEST.selection.rows) == 1:
         loc = TBL_TEST.selection.rows[0]
-        test = TEMPLATE.TEST(**dict(DATAFRAME.loc[loc]))
+        test = TEMPLATE.TEST(**DB["TEST_LIST"][loc])
 
-        print("LOAD TBL")
-        print(test)
+        # print("LOAD TBL")
+        # print(test)
 
         with col23:
             if st.button(label='✏️ EDIT TEST', use_container_width=True):
@@ -154,8 +158,12 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
                     INFOBOX(e)
 
         st.text("")
+        DF_CALIBRATION = pd.DataFrame(test.CALIBRATION, columns=[field.name for field in TEMPLATE.MEASURE])
+        DF_CALIBRATION = DF_CALIBRATION.reset_index()
+        del DF_CALIBRATION['index']
         tbl_cal_test = st.data_editor(
-            data=pd.DataFrame(test.CALIBRATION, columns=[field.name for field in TEMPLATE.MEASURE]),
+            # data=pd.DataFrame(test.CALIBRATION, columns=[field.name for field in TEMPLATE.MEASURE]),
+            data=DF_CALIBRATION,
             use_container_width=True,
             hide_index=True,
             column_config={field.name: st.column_config.NumberColumn() for field in TEMPLATE.MEASURE}, 
@@ -163,7 +171,7 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
         )
         if st.button(USUAL_ICONS.UPDATE.value + " UPDATE", key='btn_tbl_update'):
 
-            DB["TEST_LIST"][loc]['CALIBRATION=None'] = tbl_cal_test.to_dict()
+            DB["TEST_LIST"][loc]['CALIBRATION'] = tbl_cal_test.to_dict()
             print("UPDATE TBL")
             print(DB)
             try:
@@ -210,6 +218,8 @@ if TEMPLATE_ID:
         CURRENT_DB = CURRENT_TEMPLATE["DB"]
     else:
         CURRENT_DB = dict()
+    
+    # st.write(CURRENT_DB)
 
 
     ## INFO
@@ -232,6 +242,7 @@ if TEMPLATE_ID:
     if not CURRENT_DB.get("TEST_LIST"):
         CURRENT_DB["TEST_LIST"] = []
 
+    # st.write(CURRENT_DB["TEST_LIST"])
     selected = TEST_EDITOR(TEMPLATE_ID, CURRENT_DB)
     # st.write(selected)
 

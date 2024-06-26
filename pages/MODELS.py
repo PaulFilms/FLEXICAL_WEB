@@ -264,6 +264,21 @@ if MODEL_ID:
         if not st.session_state.DB_DATA.get('SPECIFICATIONS'):
             st.session_state.DB_DATA['SPECIFICATIONS'] = dict()
         
+        procedures = list(st.session_state.DB_DATA['SPECIFICATIONS'].keys())
+        procedure = st.dataframe(
+            data=pd.DataFrame(procedures, columns=['VALUE']),
+            hide_index=True,
+            on_select="rerun", # Con esta opcion aparece el selector de fila
+            selection_mode=['single-row'], # "multi-column" "multi-row"
+        )
+
+        if len(procedure.selection.rows):
+            st.text("LOAD")
+            
+            ID = procedures[procedure.selection.rows[0]]
+            # st.write(st.session_state.´DB_DATA['SPECIFICATIONS'][procedures[procedure.selection.rows[0]]])
+            DF = pd.DataFrame(st.session_state.DB_DATA['SPECIFICATIONS'][ID])
+            TBL_EDITOR(DF)
 
         ## PROCEDURES
         col12, col22 = st.columns(2)

@@ -11,6 +11,13 @@ Ejemplo1:
 ## IMPORTED LIBRARIES
 import streamlit as st
 
+st.set_page_config(
+    page_title="FLEXICAL DEVELOPER",
+    page_icon=":guardsman:",
+    layout="wide", # "centered",
+    initial_sidebar_state= "auto" # "collapsed"
+)
+
 ## INTERNAL
 from app import *
 from db import *

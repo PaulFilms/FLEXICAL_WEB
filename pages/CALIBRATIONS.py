@@ -37,8 +37,10 @@ SIDEBAR()
 with st.container(border=True):
     st.caption("""
         INCOMPLETE!! 
-        In the following updates, this page will manage calibrations, projects/campaigns, and everything related to calibrations
     """)
+    st.caption('''
+        In the following updates, this page will manage calibrations, projects/campaigns, and everything related to calibrations
+    ''')
 
 st.divider()
 
