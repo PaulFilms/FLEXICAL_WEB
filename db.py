@@ -91,6 +91,10 @@ def SQL_SELECT_COLUMN(TABLE: str, COLUMN: str) -> list:
     SQL = execute_query(conn.table(TABLE).select(COLUMN).order(COLUMN))
     return [data[COLUMN] for data in SQL.data]
 
+def SQL_SELECT_DB(TABLE: str, ID: str):
+    SQL = execute_query(conn.table(TABLE).select('DB').eq('Id', ID)).data
+    return SQL[0]['DB']
+
 @st.cache_resource
 def SQL_DEVICE_TYPES(COUNT: int):
     print(f"SQL DEVICE TYPES ({COUNT}):", GET_FIRM())

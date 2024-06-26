@@ -56,6 +56,7 @@ class USUAL_ICONS(Enum): # 🪪🧮
     EXPANDER = chr(8801)
     LOCK = "🔒"
     LOGIN = "🪪"
+    PRINT = "🖨️"
 
 def FOOTER(TEXT: str):
     footer = """<style>.footer {position: fixed;left: 330;bottom: 0;width: 100%;background-color: #000;color: white;text-align: left;}</style><div class='footer'><p>"""
@@ -181,7 +182,7 @@ def DATAFRAME_LIST(DATAFRAME: pd.DataFrame, COLUMN: str) -> tuple[pd.DataFrame, 
 
     return edited_df, SELECTED
 
-def TBL_EDITOR(DATAFRAME: pd.DataFrame) -> Tuple[st.data_editor, bool]:
+def TBL_EDITOR(DATAFRAME: pd.DataFrame) -> Tuple[pd.DataFrame, bool]:
     '''
     Render a st.data_editor with the basics fields to use for calculation
     RANGE1, RANGE2, EVALUATION, C1, C2, C3 ...
@@ -419,32 +420,30 @@ class TABLE_DATA:
             return None
         
         ## RANGE 1
-        if VALUE1 == None or VALUE1 == 0 or pd.isnull(VALUE1):
+        if VALUE1 == None or pd.isnull(VALUE1):
             return None
-        if DATAFRAME[TABLE_DATA.FIELDS.RANGE1_MIN.name].min() == VALUE1:
+        if VALUE1 == DATAFRAME[TABLE_DATA.FIELDS.RANGE1_MIN.name].min():
             DF_FILTER: pd.DataFrame = DATAFRAME[DATAFRAME[TABLE_DATA.FIELDS.RANGE1_MIN.name] == VALUE1]
         else:
             cond1 = (VALUE1 > DATAFRAME[TABLE_DATA.FIELDS.RANGE1_MIN.name])
             cond2 = (VALUE1 <= DATAFRAME[TABLE_DATA.FIELDS.RANGE1_MAX.name])
             DF_FILTER: pd.DataFrame = DATAFRAME[cond1 & cond2]
         if len(DF_FILTER) == 0:
-            # print("TBL_CALC: Length Filter from VALUE1 = 0")
             return None
 
         ## RANGE 2
         check1: bool = pd.isnull(DATAFRAME[TABLE_DATA.FIELDS.RANGE2_MIN.name].min())
         check2: bool = pd.isnull(DATAFRAME[TABLE_DATA.FIELDS.RANGE2_MAX.name].max())
         if check1 == False or check2 == False:
-            if VALUE2 == None or VALUE2 == 0 or pd.isnull(VALUE2):
+            if VALUE2 == None or pd.isnull(VALUE2):
                 return None
-            if DF_FILTER[TABLE_DATA.FIELDS.RANGE2_MIN.name].min() == VALUE2:
+            if VALUE2 == DF_FILTER[TABLE_DATA.FIELDS.RANGE2_MIN.name].min():
                 DF_FILTER = DF_FILTER[DF_FILTER[TABLE_DATA.FIELDS.RANGE2_MIN.name] == VALUE2]
             else:
                 cond1 = (VALUE2 > DF_FILTER[TABLE_DATA.FIELDS.RANGE2_MIN.name])
                 cond2 = (VALUE2 <= DF_FILTER[TABLE_DATA.FIELDS.RANGE2_MAX.name])
                 DF_FILTER = DF_FILTER[cond1 & cond2]
             if len(DF_FILTER) != 1:
-                # print("TBL_CALC ERROR: Length Filter from VALUE2 != 1")
                 return None
 
         ## EVAL
@@ -463,7 +462,6 @@ class TABLE_DATA:
             print("TBL_CALC ERROR:")
             print(e)
             return None
-
 
 @dataclass
 class UNIT:

@@ -17,6 +17,8 @@ import pandas as pd
 from app import *
 from db import *
 
+import func_xlsx as XLS
+
 
 
 ## SESSION STATES
@@ -56,7 +58,8 @@ class TEMPLATE:
             return asdict(self)
 
     class MEASURE(Enum):
-        RANGE = 0
+        RANGE_TX = 0
+        RANGE = auto()
         VALUE1 = auto()
         VALUE2 = auto()
         # MEASURE = auto()
@@ -73,10 +76,6 @@ class TEMPLATE:
 
 def TEST_EDITOR(ID: str, DB: dict) -> None:
     procedures = SQL_SELECT_COLUMN("PROCEDURES", "Id")
-
-    print("TEST_EDITOR")
-    print("DB")
-    print(DB)
 
     @st.experimental_dialog(title='✏️ EDITOR', width='small')
     def FORM_NEW():
@@ -140,9 +139,6 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
         loc = TBL_TEST.selection.rows[0]
         test = TEMPLATE.TEST(**DB["TEST_LIST"][loc])
 
-        # print("LOAD TBL")
-        # print(test)
-
         with col23:
             if st.button(label='✏️ EDIT TEST', use_container_width=True):
                 FORM_EDIT(test, loc)
@@ -170,10 +166,7 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
             num_rows='dynamic'
         )
         if st.button(USUAL_ICONS.UPDATE.value + " UPDATE", key='btn_tbl_update'):
-
             DB["TEST_LIST"][loc]['CALIBRATION'] = tbl_cal_test.to_dict()
-            print("UPDATE TBL")
-            print(DB)
             try:
                 SQL_UPDATE_DB("TEMPLATES", ID, DB)
                 st.session_state.TEMPLATES += 1
@@ -181,7 +174,337 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
             except Exception as e:
                 INFOBOX(e)
 
+def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
 
+    class HEADERS_NOVISIBLE(Enum):
+        PROCEDURE_ID = 9
+        RANGE = 11
+        VALUE1 = 12
+        VALUE2 = 13
+        CMC = 14
+        SPECIFICATION = 15
+
+    def FORMAT(REPORT: XLS.XLSREPORT) -> None:
+        '''
+        '''
+        if REPORT.WS.page_setup.fitToPage == False:
+            REPORT.WS.page_setup.fitToPage = True
+        REPORT.WS.page_setup.fitToPage = 1
+        REPORT.WS.page_setup.fitToHeight = False
+        REPORT.WS.print_area = 'A1:G1048576'
+        footer = "PAGE &P OF &N"
+        # footer = header_footer.HeaderFooterItem()
+        # footer.right()
+        # REPORT.WS.HeaderFooter.oddFooter.left.font = Font(name='Arial', size=12, bold=True)
+        REPORT.WS.HeaderFooter.oddFooter.left.text = footer
+        for col in range(1,6):
+            REPORT.COL_WIDTH(col, 20)
+        REPORT.COL_WIDTH(6, 5)
+        REPORT.COL_WIDTH(7, 5)
+        REPORT.COL_WIDTH(8, 30)
+        # REPORT.SAVE()
+
+    def HEADER(REPORT: XLS.XLSREPORT, MODEL_ID):
+        SQL = SQL_BY_ROW("MODELS", "Id", MODEL_ID)[0]
+        ##
+        img_results_path = r"resources\R&S Logo - Complete.png"
+        img_results = XLS.Image(img_results_path)
+        img_results.width = 263
+        img_results.height = 68
+        REPORT.WS.add_image(img_results, XLS.CELL_STR(1, 4))
+        ##
+        REPORT.WR_HEADER(REPORT.ROW, 1, "MANUFACTURER:")
+        REPORT.WR(REPORT.ROW, 2, SQL['MANUFACTURER'])
+        REPORT.ROW_INC()
+        REPORT.WR_HEADER(REPORT.ROW, 1, "MODEL:")
+        REPORT.WR(REPORT.ROW, 2, SQL['MODEL'])
+        REPORT.ROW_INC()
+        REPORT.WR_HEADER(REPORT.ROW, 1, "SERIAL Id:")
+        # REPORT.WR(REPORT.ROW, 2, SQL['SERIAL'])
+        REPORT.ROW_INC()
+        REPORT.WR_HEADER(REPORT.ROW, 1, "DATE:")
+        # REPORT.WR(REPORT.ROW, 2, SYS.DATE_GET_TODAY())
+        REPORT.ROW_INC()
+        REPORT.LOW_BORDER(REPORT.ROW, col_fin=8)
+        REPORT.ROW_INC(2)
+        REPORT.SHEET_HEAD(6)
+        REPORT.SAVE()
+
+    def PAGE3(REPORT: XLS.XLSREPORT) -> None:
+        '''
+        '''
+        FONT1 = XLS.Font(name='Calibri', size=12, bold=False)
+        FONT2 = XLS.Font(name='Calibri', size=9, bold=False)
+        # 
+        REPORT.WR_TITLE(REPORT.ROW, 1, r"Comments on the measured results")
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, r"The measurement results in the test report stated below have been tested for compliance with the given specifications and marked if necessary. In doing so, the associated uncertainty of measurement has been taken into acount.")
+        REPORT.WS.merge_cells(
+            start_row=REPORT.ROW, 
+            end_row=REPORT.ROW+1,
+            start_column=1,
+            end_column=5
+            )
+        # BUG: Create Function in pydeveloptools
+        REPORT.WS.cell(REPORT.ROW, 1).alignment = XLS.Alignment(wrap_text=True, vertical="top")
+        REPORT.ROW_INC(2)
+        img_results_path = r"resources\Results.jpg"
+        img_results = XLS.Image(img_results_path)
+        img_results.width = 491
+        img_results.height = 227
+        REPORT.WS.add_image(img_results, XLS.CELL_STR(REPORT.ROW, 1))
+        # REPORT.IMAGE_INSERT(REPORT.ROW, 1, )
+        REPORT.ROW_INC(13)
+        REPORT.WR_TITLE(REPORT.ROW, 1, r"The following abbrevations may be used in this certificate:")
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, r"¹", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"Measurement results that are not covered by the DAkkS accreditation.", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, "{a}", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r'No measurement uncertainty stated because the errors always add together.', FONT2)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 2, r'So it is sure that a measurement result evaluted as "PASS" is pass.', FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, "{b}", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"The measurement uncertainty depends on the measurement result. ", FONT2)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 2, r"The stated measurement uncertainty is valid for the close area around the specification. ", FONT2)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 2, r"Measurement results outside the close area have a higher measurement uncertainty but are within the specification.", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, r"{c} ,  ²", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"Functional test, therefore no measurement uncertainty is stated.", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, r"{d}", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"Typical value, refer to performance test.", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, r"{e}", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"The measurement uncertainty is taken into account when setting the measuring system.", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, r"{g}", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"Verification of specified requirements, non-accredited measurements. ", FONT2)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 2, r"Technical operation that consist of the determination of one or more characteristics to", FONT2)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 2, r"a specified procedure (formerly {f}).", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, "DL , DT", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"Data Limit for symmetrical tolerance limits", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, "UGB", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"Uncertainty guard band: Measuring uncertainty violates the data sheet tolerance", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, "UGB1 , u", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"Measurement results marked as UGB1 show conformity with a probability of >50 % and <95 %.", FONT2)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, "UGB2 , u", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"Measurement results marked as UGB2 show non-conformity with a probability of >50 % and <95 %.", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, "FAIL , f", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"Measurement results marked as FAIL show non-conformity", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, "n. i.", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"not installed: Does not apply due to instrument configuration", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, "n. m.", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"not measured", FONT2)
+        REPORT.ROW_INC()
+        REPORT.ROW_WIDTH(REPORT.ROW, 5)
+        REPORT.ROW_INC()
+        REPORT.WR(REPORT.ROW, 1, "ref.", FONT1)
+        REPORT.WR(REPORT.ROW, 2, r"Reference value, used for relative measurements", FONT2)
+        REPORT.ROW_INC(2)
+        REPORT.PAGE_BREAK(REPORT.ROW)
+        REPORT.ROW_INC()
+        REPORT.SAVE()
+
+    def TEST(REPORT: XLS.XLSREPORT) -> None:
+        '''
+        '''
+        FONT1 = XLS.Font(name='Calibri', size=9, bold=False)
+        COL_PROCEDURE = 9
+        COL_NOVISIBLE = COL_PROCEDURE + 2
+        for TEST_CURRENT in self.CALIBRATION.TEST_LIST:
+            ## TITLE
+            REPORT.WR_TITLE(REPORT.ROW, 1, f"{INT_TWODIGITS(self.CALIBRATION.TEST_LIST.index(TEST_CURRENT)+1)} - {TEST_CURRENT.TEST}")
+            REPORT.ROW_INC()
+
+            ## PARAMETERS
+            if TEST_CURRENT.PARAMETERS: # Hay casos que puede estar vacio
+                REPORT.WR(REPORT.ROW, 1, TEST_CURRENT.PARAMETERS, FONT1)
+                REPORT.ROW_WIDTH(REPORT.ROW, 8)
+                REPORT.ROW_INC()
+            
+            ## CONTENT
+            DF_CALIBRATION = pd.DataFrame(TEST_CURRENT.CALIBRATION)
+            # BUG
+            DF_CALIBRATION[MEASURE.FIELDS.UNCERTAINTY.name] = DF_CALIBRATION[MEASURE.FIELDS.CMC.name]
+            DF_CALIBRATION[MEASURE.FIELDS.RESULT.name] = None
+
+            ## TEST HEADERS
+            REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT", "UNCERTAINTY"])
+            HEADERS_NOVISIBLE = [field.name for field in MEASURE.FIELDS]
+            REPORT.WR_HEADER(REPORT.ROW, COL_PROCEDURE, "PROCEDURE Id")
+            REPORT.WR_HEADERS(REPORT.ROW, COL_NOVISIBLE, HEADERS_NOVISIBLE)
+            REPORT.ROW_INC()
+
+            PROCEDURE_ID = TEST_CURRENT.PROCEDURE_ID
+            FORMAT: dict = None
+            if self.DBSYNC.SQL_EXEC(f"SELECT COUNT (*) FROM PROCEDURES WHERE Id='{PROCEDURE_ID}';")[0][0] == 1:
+                SQL = self.DBSYNC.SQL_EXEC(f"SELECT REPORT FROM PROCEDURES WHERE Id='{PROCEDURE_ID}';")[0][0]
+                FORMAT = json.loads(SQL)
+                DF_REPORT = REPORT.GET_REPORT_DF(DF_CALIBRATION, REPORT.FORMATS(**FORMAT))
+
+            for row in range(len(DF_CALIBRATION)):
+                if FORMAT:
+                    REPORT.WR(REPORT.ROW, 1, DF_REPORT.iloc[row][REPORT.FIELDS.PARAMETERS.name], FONT1)
+                    REPORT.WR(REPORT.ROW, 3, DF_REPORT.iloc[row][REPORT.FIELDS.MEASURE.name])
+                    REPORT.WR(REPORT.ROW, 4, DF_REPORT.iloc[row][REPORT.FIELDS.LIMIT.name])
+                    REPORT.WR(REPORT.ROW, 5, DF_REPORT.iloc[row][REPORT.FIELDS.UNCERTAINTY.name])
+                    # REPORT.WR(REPORT.ROW, 6, DF_REPORT.iloc[row][REPORT.FIELDS.RESULT.name])
+                REPORT.WR(REPORT.ROW, COL_PROCEDURE, TEST_CURRENT.PROCEDURE_ID)
+                for col in HEADERS_NOVISIBLE:
+                    value = DF_CALIBRATION.iloc[row][col]
+                    REPORT.WR(REPORT.ROW, COL_NOVISIBLE + HEADERS_NOVISIBLE.index(col), value)
+                REPORT.ROW_INC()
+            
+            ## FIN
+            REPORT.ROW_INC(2)
+            REPORT.PAGE_BREAK(REPORT.ROW)
+            REPORT.ROW_INC(2)
+            REPORT.SAVE()
+
+
+    holder = st.empty()
+    # with holder.status("Downloading data...", expanded=True) as status:
+    #     st.write("Making .xlsx file...")
+    #     sleep(3)
+    if holder.button("GET TEMPLATE .xlsx"):
+        # with st.spinner('Creating .xlsx file...'):
+        #     sleep(3)
+        # holder.button("DOWNLOAD FILE")
+        # st.write(CURRENT_DB)
+
+        MODEL_ID = CURRENT_TEMPLATE["MODEL_ID"]
+
+        path_file = rf"REPORTS/{MODEL_ID}.xlsx"
+        if os.path.exists(path_file):
+            os.remove(path_file)
+        REPORT = XLS.XLSREPORT(path_file, worksheet_name='Test-Report')
+        FORMAT(REPORT)
+        HEADER(REPORT, MODEL_ID)
+        PAGE3(REPORT)
+
+        MODEL_DB = SQL_SELECT_DB("MODELS", MODEL_ID) #['SPECIFICATIONS']
+        SPECIFICATION_DICT = json.loads(MODEL_DB)['SPECIFICATIONS']
+        print(MODEL_ID)
+
+        ## TEST
+        print()
+        for test in CURRENT_DB["TEST_LIST"]:
+            current_test = TEMPLATE.TEST(**test)
+            PROCEDURE_ID = current_test.PROCEDURE_ID
+            SQL_PROCEDURE = SQL_BY_ROW("PROCEDURES", "Id", PROCEDURE_ID)[0]
+            PROCEDURE_DB = json.loads(SQL_PROCEDURE['DB'])
+            PROCEDURE_PYDATA = SQL_PROCEDURE['PYDATA']
+            print(PROCEDURE_PYDATA)
+            try:
+                MODULE = {}
+                exec(PROCEDURE_PYDATA, MODULE)
+                # RESULT_FUNC = MODULE['RESULT']
+                # TEST_ROW: dict = RESULT_FUNC(dict(TEST_ROW))
+                # del MODULE
+            except Exception as e:
+                print("ERROR / ImportLib")
+                print(e)
+            print(PROCEDURE_DB)
+            # CMC_DICT = json.loads(PROCEDURE_DB)['CMC']
+            CMC_DF = pd.DataFrame(PROCEDURE_DB['CMC'])
+            SPECIFICATION_DF = pd.DataFrame(SPECIFICATION_DICT[PROCEDURE_ID]) #, columns=['RANGE1_MIN', 'RANGE1_MAX','RANGE2_MIN','RANGE2_MAX','RESOLUTION','C1','C2','C3','EVALUATION',])
+            # print(SPECIFICATION_DF)
+
+            ## TEST TITLE
+            TEST_TITLE = current_test.TEST
+            print(TEST_TITLE)
+            REPORT.WR_TITLE(REPORT.ROW, 1, f"{CURRENT_DB["TEST_LIST"].index(test)+1} - {TEST_TITLE}")
+            REPORT.ROW_INC()
+
+
+            ## PARAMETERS
+            PARAMETERS = current_test.PARAMETERS
+            print(PARAMETERS)
+            if PARAMETERS: # Hay casos que puede estar vacio
+                REPORT.WR(REPORT.ROW, 1, PARAMETERS, XLS.Font(name='Calibri', size=9, bold=False))
+                REPORT.ROW_WIDTH(REPORT.ROW, 8)
+                REPORT.ROW_INC()
+
+            print()
+
+            ## CALIBRATION CONTENT
+            REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT", "UNCERTAINTY"])
+            for header in HEADERS_NOVISIBLE:
+                REPORT.WR_HEADER(REPORT.ROW, header.value, header.name)
+            REPORT.ROW_INC()
+
+            CALIBRATION_DF = pd.DataFrame(current_test.CALIBRATION)
+            for loc in CALIBRATION_DF.index:
+                # print(dict(CALIBRATION_DF.loc[loc]))
+                ROW_DATA = dict(CALIBRATION_DF.loc[loc])
+                # SPECIFICATION = TABLE_DATA.GET_VALUE(SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                # CMC = TABLE_DATA.GET_VALUE(CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                SPECIFICATION = 0.0
+                if MODULE.get("SPECIFICATION"):
+                    SPECIFICATION = MODULE['SPECIFICATION'](SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                CMC = 0.0
+                if MODULE.get("CMC"):
+                    CMC = MODULE['CMC'](CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                print(SPECIFICATION, CMC)
+
+                ## REPORT
+                REPORT.WR(REPORT.ROW, 1, PROCEDURE_DB['REPORT_FORMAT']['PARAMETERS']['PARAMETERS'].format(**ROW_DATA))
+                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.PROCEDURE_ID.value, PROCEDURE_ID)
+                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.RANGE.value, ROW_DATA['RANGE'])
+                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE1.value, ROW_DATA['VALUE1'])
+                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE2.value, ROW_DATA['VALUE2'])
+                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.SPECIFICATION.value, SPECIFICATION)
+                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.CMC.value, CMC)
+                REPORT.ROW_INC()
+                
+            REPORT.ROW_INC()
+            REPORT.SAVE()
+        
+        holder.download_button(
+            label="📩 DOWNLOAD .xlsx File",
+            data=open(path_file, "rb").read(),
+            file_name=path_file,
+            # mime="application/x-sqlite3",
+            # use_container_width=True
+        )
+        os.remove(path_file)
 
 
 ## PAGE
@@ -221,6 +544,10 @@ if TEMPLATE_ID:
     
     # st.write(CURRENT_DB)
 
+    ## PRINT EXCEL
+    ## __________________________________________________________________________________________________
+
+    PRINT_XLSX(CURRENT_TEMPLATE)
 
     ## INFO
     ## __________________________________________________________________________________________________
