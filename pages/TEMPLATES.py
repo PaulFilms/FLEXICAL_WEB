@@ -398,113 +398,113 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
             REPORT.ROW_INC(2)
             REPORT.SAVE()
 
+    st.text("")
+    col12, col22 = st.columns(2)
 
-    holder = st.empty()
-    # with holder.status("Downloading data...", expanded=True) as status:
-    #     st.write("Making .xlsx file...")
-    #     sleep(3)
-    if holder.button("GET TEMPLATE .xlsx"):
-        # with st.spinner('Creating .xlsx file...'):
+    with col12:
+
+        holder = st.empty()
+        # with holder.status("Downloading data...", expanded=True) as status:
+        #     st.write("Making .xlsx file...")
         #     sleep(3)
-        # holder.button("DOWNLOAD FILE")
-        # st.write(CURRENT_DB)
+        if holder.button("GET TEMPLATE .xlsx", use_container_width=True):
+            with st.spinner('Creating .xlsx file...'):
+                MODEL_ID = CURRENT_TEMPLATE["MODEL_ID"]
 
-        MODEL_ID = CURRENT_TEMPLATE["MODEL_ID"]
+                path_file = rf"REPORTS/{MODEL_ID}.xlsx"
+                if os.path.exists(path_file):
+                    os.remove(path_file)
+                REPORT = XLS.XLSREPORT(path_file, worksheet_name='Test-Report')
+                FORMAT(REPORT)
+                HEADER(REPORT, MODEL_ID)
+                PAGE3(REPORT)
 
-        path_file = rf"REPORTS/{MODEL_ID}.xlsx"
-        if os.path.exists(path_file):
-            os.remove(path_file)
-        REPORT = XLS.XLSREPORT(path_file, worksheet_name='Test-Report')
-        FORMAT(REPORT)
-        HEADER(REPORT, MODEL_ID)
-        PAGE3(REPORT)
+                MODEL_DB = SQL_SELECT_DB("MODELS", MODEL_ID) #['SPECIFICATIONS']
+                SPECIFICATION_DICT = json.loads(MODEL_DB)['SPECIFICATIONS']
+                print(MODEL_ID)
 
-        MODEL_DB = SQL_SELECT_DB("MODELS", MODEL_ID) #['SPECIFICATIONS']
-        SPECIFICATION_DICT = json.loads(MODEL_DB)['SPECIFICATIONS']
-        print(MODEL_ID)
+                ## TEST
+                print()
+                for test in CURRENT_DB["TEST_LIST"]:
+                    current_test = TEMPLATE.TEST(**test)
+                    PROCEDURE_ID = current_test.PROCEDURE_ID
+                    SQL_PROCEDURE = SQL_BY_ROW("PROCEDURES", "Id", PROCEDURE_ID)[0]
+                    PROCEDURE_DB = json.loads(SQL_PROCEDURE['DB'])
+                    PROCEDURE_PYDATA = SQL_PROCEDURE['PYDATA']
+                    print(PROCEDURE_PYDATA)
+                    try:
+                        MODULE = {}
+                        exec(PROCEDURE_PYDATA, MODULE)
+                        # RESULT_FUNC = MODULE['RESULT']
+                        # TEST_ROW: dict = RESULT_FUNC(dict(TEST_ROW))
+                        # del MODULE
+                    except Exception as e:
+                        print("ERROR / ImportLib")
+                        print(e)
+                    print(PROCEDURE_DB)
+                    # CMC_DICT = json.loads(PROCEDURE_DB)['CMC']
+                    CMC_DF = pd.DataFrame(PROCEDURE_DB['CMC'])
+                    SPECIFICATION_DF = pd.DataFrame(SPECIFICATION_DICT[PROCEDURE_ID]) #, columns=['RANGE1_MIN', 'RANGE1_MAX','RANGE2_MIN','RANGE2_MAX','RESOLUTION','C1','C2','C3','EVALUATION',])
+                    # print(SPECIFICATION_DF)
 
-        ## TEST
-        print()
-        for test in CURRENT_DB["TEST_LIST"]:
-            current_test = TEMPLATE.TEST(**test)
-            PROCEDURE_ID = current_test.PROCEDURE_ID
-            SQL_PROCEDURE = SQL_BY_ROW("PROCEDURES", "Id", PROCEDURE_ID)[0]
-            PROCEDURE_DB = json.loads(SQL_PROCEDURE['DB'])
-            PROCEDURE_PYDATA = SQL_PROCEDURE['PYDATA']
-            print(PROCEDURE_PYDATA)
-            try:
-                MODULE = {}
-                exec(PROCEDURE_PYDATA, MODULE)
-                # RESULT_FUNC = MODULE['RESULT']
-                # TEST_ROW: dict = RESULT_FUNC(dict(TEST_ROW))
-                # del MODULE
-            except Exception as e:
-                print("ERROR / ImportLib")
-                print(e)
-            print(PROCEDURE_DB)
-            # CMC_DICT = json.loads(PROCEDURE_DB)['CMC']
-            CMC_DF = pd.DataFrame(PROCEDURE_DB['CMC'])
-            SPECIFICATION_DF = pd.DataFrame(SPECIFICATION_DICT[PROCEDURE_ID]) #, columns=['RANGE1_MIN', 'RANGE1_MAX','RANGE2_MIN','RANGE2_MAX','RESOLUTION','C1','C2','C3','EVALUATION',])
-            # print(SPECIFICATION_DF)
-
-            ## TEST TITLE
-            TEST_TITLE = current_test.TEST
-            print(TEST_TITLE)
-            REPORT.WR_TITLE(REPORT.ROW, 1, f"{CURRENT_DB["TEST_LIST"].index(test)+1} - {TEST_TITLE}")
-            REPORT.ROW_INC()
+                    ## TEST TITLE
+                    TEST_TITLE = current_test.TEST
+                    print(TEST_TITLE)
+                    REPORT.WR_TITLE(REPORT.ROW, 1, f"{CURRENT_DB["TEST_LIST"].index(test)+1} - {TEST_TITLE}")
+                    REPORT.ROW_INC()
 
 
-            ## PARAMETERS
-            PARAMETERS = current_test.PARAMETERS
-            print(PARAMETERS)
-            if PARAMETERS: # Hay casos que puede estar vacio
-                REPORT.WR(REPORT.ROW, 1, PARAMETERS, XLS.Font(name='Calibri', size=9, bold=False))
-                REPORT.ROW_WIDTH(REPORT.ROW, 8)
-                REPORT.ROW_INC()
+                    ## PARAMETERS
+                    PARAMETERS = current_test.PARAMETERS
+                    print(PARAMETERS)
+                    if PARAMETERS: # Hay casos que puede estar vacio
+                        REPORT.WR(REPORT.ROW, 1, PARAMETERS, XLS.Font(name='Calibri', size=9, bold=False))
+                        REPORT.ROW_WIDTH(REPORT.ROW, 8)
+                        REPORT.ROW_INC()
 
-            print()
+                    print()
 
-            ## CALIBRATION CONTENT
-            REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT", "UNCERTAINTY"])
-            for header in HEADERS_NOVISIBLE:
-                REPORT.WR_HEADER(REPORT.ROW, header.value, header.name)
-            REPORT.ROW_INC()
+                    ## CALIBRATION CONTENT
+                    REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT", "UNCERTAINTY"])
+                    for header in HEADERS_NOVISIBLE:
+                        REPORT.WR_HEADER(REPORT.ROW, header.value, header.name)
+                    REPORT.ROW_INC()
 
-            CALIBRATION_DF = pd.DataFrame(current_test.CALIBRATION)
-            for loc in CALIBRATION_DF.index:
-                # print(dict(CALIBRATION_DF.loc[loc]))
-                ROW_DATA = dict(CALIBRATION_DF.loc[loc])
-                # SPECIFICATION = TABLE_DATA.GET_VALUE(SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                # CMC = TABLE_DATA.GET_VALUE(CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                SPECIFICATION = 0.0
-                if MODULE.get("SPECIFICATION"):
-                    SPECIFICATION = MODULE['SPECIFICATION'](SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                CMC = 0.0
-                if MODULE.get("CMC"):
-                    CMC = MODULE['CMC'](CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                print(SPECIFICATION, CMC)
+                    CALIBRATION_DF = pd.DataFrame(current_test.CALIBRATION)
+                    for loc in CALIBRATION_DF.index:
+                        # print(dict(CALIBRATION_DF.loc[loc]))
+                        ROW_DATA = dict(CALIBRATION_DF.loc[loc])
+                        # SPECIFICATION = TABLE_DATA.GET_VALUE(SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                        # CMC = TABLE_DATA.GET_VALUE(CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                        SPECIFICATION = 0.0
+                        if MODULE.get("SPECIFICATION"):
+                            SPECIFICATION = MODULE['SPECIFICATION'](SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                        CMC = 0.0
+                        if MODULE.get("CMC"):
+                            CMC = MODULE['CMC'](CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                        print(SPECIFICATION, CMC)
 
-                ## REPORT
-                REPORT.WR(REPORT.ROW, 1, PROCEDURE_DB['REPORT_FORMAT']['PARAMETERS']['PARAMETERS'].format(**ROW_DATA))
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.PROCEDURE_ID.value, PROCEDURE_ID)
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.RANGE.value, ROW_DATA['RANGE'])
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE1.value, ROW_DATA['VALUE1'])
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE2.value, ROW_DATA['VALUE2'])
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.SPECIFICATION.value, SPECIFICATION)
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.CMC.value, CMC)
-                REPORT.ROW_INC()
+                        ## REPORT
+                        REPORT.WR(REPORT.ROW, 1, PROCEDURE_DB['REPORT_FORMAT']['PARAMETERS']['PARAMETERS'].format(**ROW_DATA))
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.PROCEDURE_ID.value, PROCEDURE_ID)
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.RANGE.value, ROW_DATA['RANGE'])
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE1.value, ROW_DATA['VALUE1'])
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE2.value, ROW_DATA['VALUE2'])
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.SPECIFICATION.value, SPECIFICATION)
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.CMC.value, CMC)
+                        REPORT.ROW_INC()
+                        
+                    REPORT.ROW_INC()
+                    REPORT.SAVE()
                 
-            REPORT.ROW_INC()
-            REPORT.SAVE()
-        
-        holder.download_button(
-            label="📩 DOWNLOAD .xlsx File",
-            data=open(path_file, "rb").read(),
-            file_name=path_file,
-            # mime="application/x-sqlite3",
-            # use_container_width=True
-        )
-        os.remove(path_file)
+                holder.download_button(
+                    label="📩 DOWNLOAD .xlsx File",
+                    data=open(path_file, "rb").read(),
+                    file_name=path_file,
+                    # mime="application/x-sqlite3",
+                    use_container_width=True
+                )
+                os.remove(path_file)
 
 
 ## PAGE
