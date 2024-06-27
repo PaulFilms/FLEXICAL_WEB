@@ -207,7 +207,7 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
     def HEADER(REPORT: XLS.XLSREPORT, MODEL_ID):
         SQL = SQL_BY_ROW("MODELS", "Id", MODEL_ID)[0]
         ##
-        img_results_path = r"resources\R&S Logo - Complete.png"
+        img_results_path = os.path.join("resources",r"R&S Logo - Complete.png")
         img_results = XLS.Image(img_results_path)
         img_results.width = 263
         img_results.height = 68
@@ -248,7 +248,7 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
         # BUG: Create Function in pydeveloptools
         REPORT.WS.cell(REPORT.ROW, 1).alignment = XLS.Alignment(wrap_text=True, vertical="top")
         REPORT.ROW_INC(2)
-        img_results_path = r"resources\Results.jpg"
+        img_results_path = os.path.join("resources", r"Results.jpg")
         img_results = XLS.Image(img_results_path)
         img_results.width = 491
         img_results.height = 227
@@ -410,8 +410,9 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
         # st.write(CURRENT_DB)
 
         MODEL_ID = CURRENT_TEMPLATE["MODEL_ID"]
-
-        path_file = rf"REPORTS/{MODEL_ID}.xlsx"
+        if not os.path.exists("REPORTS"):
+            os.mkdir('REPORTS')
+        path_file = os.path.join("REPORTS",f"{MODEL_ID}.xlsx")
         if os.path.exists(path_file):
             os.remove(path_file)
         REPORT = XLS.XLSREPORT(path_file, worksheet_name='Test-Report')
@@ -421,17 +422,17 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
 
         MODEL_DB = SQL_SELECT_DB("MODELS", MODEL_ID) #['SPECIFICATIONS']
         SPECIFICATION_DICT = json.loads(MODEL_DB)['SPECIFICATIONS']
-        print(MODEL_ID)
+        # print(MODEL_ID)
 
         ## TEST
-        print()
+        # print()
         for test in CURRENT_DB["TEST_LIST"]:
             current_test = TEMPLATE.TEST(**test)
             PROCEDURE_ID = current_test.PROCEDURE_ID
             SQL_PROCEDURE = SQL_BY_ROW("PROCEDURES", "Id", PROCEDURE_ID)[0]
             PROCEDURE_DB = json.loads(SQL_PROCEDURE['DB'])
             PROCEDURE_PYDATA = SQL_PROCEDURE['PYDATA']
-            print(PROCEDURE_PYDATA)
+            # print(PROCEDURE_PYDATA)
             try:
                 MODULE = {}
                 exec(PROCEDURE_PYDATA, MODULE)
@@ -441,7 +442,7 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
             except Exception as e:
                 print("ERROR / ImportLib")
                 print(e)
-            print(PROCEDURE_DB)
+            # print(PROCEDURE_DB)
             # CMC_DICT = json.loads(PROCEDURE_DB)['CMC']
             CMC_DF = pd.DataFrame(PROCEDURE_DB['CMC'])
             SPECIFICATION_DF = pd.DataFrame(SPECIFICATION_DICT[PROCEDURE_ID]) #, columns=['RANGE1_MIN', 'RANGE1_MAX','RANGE2_MIN','RANGE2_MAX','RESOLUTION','C1','C2','C3','EVALUATION',])
@@ -449,20 +450,20 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
 
             ## TEST TITLE
             TEST_TITLE = current_test.TEST
-            print(TEST_TITLE)
+            # print(TEST_TITLE)
             REPORT.WR_TITLE(REPORT.ROW, 1, f"{CURRENT_DB["TEST_LIST"].index(test)+1} - {TEST_TITLE}")
             REPORT.ROW_INC()
 
 
             ## PARAMETERS
             PARAMETERS = current_test.PARAMETERS
-            print(PARAMETERS)
+            # print(PARAMETERS)
             if PARAMETERS: # Hay casos que puede estar vacio
                 REPORT.WR(REPORT.ROW, 1, PARAMETERS, XLS.Font(name='Calibri', size=9, bold=False))
                 REPORT.ROW_WIDTH(REPORT.ROW, 8)
                 REPORT.ROW_INC()
 
-            print()
+            # print()
 
             ## CALIBRATION CONTENT
             REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT", "UNCERTAINTY"])
@@ -482,7 +483,7 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
                 CMC = 0.0
                 if MODULE.get("CMC"):
                     CMC = MODULE['CMC'](CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                print(SPECIFICATION, CMC)
+                # print(SPECIFICATION, CMC)
 
                 ## REPORT
                 REPORT.WR(REPORT.ROW, 1, PROCEDURE_DB['REPORT_FORMAT']['PARAMETERS']['PARAMETERS'].format(**ROW_DATA))
@@ -500,8 +501,8 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
         holder.download_button(
             label="📩 DOWNLOAD .xlsx File",
             data=open(path_file, "rb").read(),
-            file_name=path_file,
-            # mime="application/x-sqlite3",
+            file_name=f'{MODEL_ID}.xlsx',
+            mime="calcs/xlsx",
             # use_container_width=True
         )
         os.remove(path_file)

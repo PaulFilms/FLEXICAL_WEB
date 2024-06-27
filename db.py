@@ -153,6 +153,17 @@ def SQL_UPDATE_DB(TABLE: str, ID, DB: dict) -> None:
     st.session_state[TABLE] += 1
 
 def GET_LOCAL_DB() -> None:
+    '''
+    INCOMPLETE:
+
+    TASK:
+
+    TBL COMPANIES / CUSTOMERS
+    TBL PROCEDURES
+    TBL TEMPLATES / VIEW with models datas
+    TBL DEVICES VIEW (Only Local Calibrations)
+    
+    '''
     path_file = "flexical.db"
     if os.path.exists(path_file):
         os.remove(path_file)
