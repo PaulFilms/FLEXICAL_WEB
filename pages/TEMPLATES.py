@@ -178,11 +178,12 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
 
     class HEADERS_NOVISIBLE(Enum):
         PROCEDURE_ID = 9
-        RANGE = 11
-        VALUE1 = 12
-        VALUE2 = 13
-        CMC = 14
-        SPECIFICATION = 15
+        RANGE_TX = 11
+        RANGE = 12
+        VALUE1 = 13
+        VALUE2 = 14
+        CMC = 15
+        SPECIFICATION = 16
 
     def FORMAT(REPORT: XLS.XLSREPORT) -> None:
         '''
@@ -342,170 +343,116 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
         REPORT.ROW_INC()
         REPORT.SAVE()
 
-    def TEST(REPORT: XLS.XLSREPORT) -> None:
-        '''
-        '''
-        FONT1 = XLS.Font(name='Calibri', size=9, bold=False)
-        COL_PROCEDURE = 9
-        COL_NOVISIBLE = COL_PROCEDURE + 2
-        for TEST_CURRENT in self.CALIBRATION.TEST_LIST:
-            ## TITLE
-            REPORT.WR_TITLE(REPORT.ROW, 1, f"{INT_TWODIGITS(self.CALIBRATION.TEST_LIST.index(TEST_CURRENT)+1)} - {TEST_CURRENT.TEST}")
-            REPORT.ROW_INC()
-
-            ## PARAMETERS
-            if TEST_CURRENT.PARAMETERS: # Hay casos que puede estar vacio
-                REPORT.WR(REPORT.ROW, 1, TEST_CURRENT.PARAMETERS, FONT1)
-                REPORT.ROW_WIDTH(REPORT.ROW, 8)
-                REPORT.ROW_INC()
-            
-            ## CONTENT
-            DF_CALIBRATION = pd.DataFrame(TEST_CURRENT.CALIBRATION)
-            # BUG
-            DF_CALIBRATION[MEASURE.FIELDS.UNCERTAINTY.name] = DF_CALIBRATION[MEASURE.FIELDS.CMC.name]
-            DF_CALIBRATION[MEASURE.FIELDS.RESULT.name] = None
-
-            ## TEST HEADERS
-            REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT", "UNCERTAINTY"])
-            HEADERS_NOVISIBLE = [field.name for field in MEASURE.FIELDS]
-            REPORT.WR_HEADER(REPORT.ROW, COL_PROCEDURE, "PROCEDURE Id")
-            REPORT.WR_HEADERS(REPORT.ROW, COL_NOVISIBLE, HEADERS_NOVISIBLE)
-            REPORT.ROW_INC()
-
-            PROCEDURE_ID = TEST_CURRENT.PROCEDURE_ID
-            FORMAT: dict = None
-            if self.DBSYNC.SQL_EXEC(f"SELECT COUNT (*) FROM PROCEDURES WHERE Id='{PROCEDURE_ID}';")[0][0] == 1:
-                SQL = self.DBSYNC.SQL_EXEC(f"SELECT REPORT FROM PROCEDURES WHERE Id='{PROCEDURE_ID}';")[0][0]
-                FORMAT = json.loads(SQL)
-                DF_REPORT = REPORT.GET_REPORT_DF(DF_CALIBRATION, REPORT.FORMATS(**FORMAT))
-
-            for row in range(len(DF_CALIBRATION)):
-                if FORMAT:
-                    REPORT.WR(REPORT.ROW, 1, DF_REPORT.iloc[row][REPORT.FIELDS.PARAMETERS.name], FONT1)
-                    REPORT.WR(REPORT.ROW, 3, DF_REPORT.iloc[row][REPORT.FIELDS.MEASURE.name])
-                    REPORT.WR(REPORT.ROW, 4, DF_REPORT.iloc[row][REPORT.FIELDS.LIMIT.name])
-                    REPORT.WR(REPORT.ROW, 5, DF_REPORT.iloc[row][REPORT.FIELDS.UNCERTAINTY.name])
-                    # REPORT.WR(REPORT.ROW, 6, DF_REPORT.iloc[row][REPORT.FIELDS.RESULT.name])
-                REPORT.WR(REPORT.ROW, COL_PROCEDURE, TEST_CURRENT.PROCEDURE_ID)
-                for col in HEADERS_NOVISIBLE:
-                    value = DF_CALIBRATION.iloc[row][col]
-                    REPORT.WR(REPORT.ROW, COL_NOVISIBLE + HEADERS_NOVISIBLE.index(col), value)
-                REPORT.ROW_INC()
-            
-            ## FIN
-            REPORT.ROW_INC(2)
-            REPORT.PAGE_BREAK(REPORT.ROW)
-            REPORT.ROW_INC(2)
-            REPORT.SAVE()
-
     st.text("")
     col12, col22 = st.columns(2)
 
     with col12:
 
         holder = st.empty()
-        # with holder.status("Downloading data...", expanded=True) as status:
-        #     st.write("Making .xlsx file...")
-        #     sleep(3)
         if holder.button("GET TEMPLATE .xlsx", use_container_width=True):
-            with st.spinner('Creating .xlsx file...'):
-                MODEL_ID = CURRENT_TEMPLATE["MODEL_ID"]
-        if not os.path.exists("REPORTS"):
-            os.mkdir('REPORTS')
-                path_file = os.path.join("REPORTS",f"{MODEL_ID}.xlsx")
-                if os.path.exists(path_file):
-                    os.remove(path_file)
-                REPORT = XLS.XLSREPORT(path_file, worksheet_name='Test-Report')
-                FORMAT(REPORT)
-                HEADER(REPORT, MODEL_ID)
-                PAGE3(REPORT)
+            # with st.spinner('Creating .xlsx file...'):
+            
+            MODEL_ID = CURRENT_TEMPLATE["MODEL_ID"]
 
-        MODEL_DB = SQL_SELECT_DB("MODELS", MODEL_ID) #['SPECIFICATIONS']
-        SPECIFICATION_DICT = json.loads(MODEL_DB)['SPECIFICATIONS']
-        # print(MODEL_ID)
+            if not os.path.exists("REPORTS"):
+                os.mkdir('REPORTS')
+            path_file = os.path.join("REPORTS",f"{MODEL_ID}.xlsx")
+            if os.path.exists(path_file):
+                os.remove(path_file)
+            
+            ## REPORT
+            REPORT = XLS.XLSREPORT(path_file, worksheet_name='Test-Report')
+            FORMAT(REPORT)
+            HEADER(REPORT, MODEL_ID)
+            PAGE3(REPORT)
 
-        ## TEST
-        # print()
-        for test in CURRENT_DB["TEST_LIST"]:
-            current_test = TEMPLATE.TEST(**test)
-            PROCEDURE_ID = current_test.PROCEDURE_ID
-            SQL_PROCEDURE = SQL_BY_ROW("PROCEDURES", "Id", PROCEDURE_ID)[0]
-            PROCEDURE_DB = json.loads(SQL_PROCEDURE['DB'])
-            PROCEDURE_PYDATA = SQL_PROCEDURE['PYDATA']
-            # print(PROCEDURE_PYDATA)
-            try:
+            MODEL_DB = SQL_SELECT_DB("MODELS", MODEL_ID)
+            SPECIFICATION_DICT = json.loads(MODEL_DB)['SPECIFICATIONS']
+            # print(MODEL_ID)
+
+            ## TEST
+            # print()
+            for test in CURRENT_DB["TEST_LIST"]:
+                current_test = TEMPLATE.TEST(**test)
+                PROCEDURE_ID = current_test.PROCEDURE_ID
+                SQL_PROCEDURE = SQL_BY_ROW("PROCEDURES", "Id", PROCEDURE_ID)[0]
+                PROCEDURE_DB = json.loads(SQL_PROCEDURE['DB'])
+                PROCEDURE_PYDATA = SQL_PROCEDURE['PYDATA']
+                # print(PROCEDURE_PYDATA)
                 MODULE = {}
-                exec(PROCEDURE_PYDATA, MODULE)
-                # RESULT_FUNC = MODULE['RESULT']
-                # TEST_ROW: dict = RESULT_FUNC(dict(TEST_ROW))
-                # del MODULE
-            except Exception as e:
-                print("ERROR / ImportLib")
-                print(e)
-            # print(PROCEDURE_DB)
-            # CMC_DICT = json.loads(PROCEDURE_DB)['CMC']
-            CMC_DF = pd.DataFrame(PROCEDURE_DB['CMC'])
-            SPECIFICATION_DF = pd.DataFrame(SPECIFICATION_DICT[PROCEDURE_ID]) #, columns=['RANGE1_MIN', 'RANGE1_MAX','RANGE2_MIN','RANGE2_MAX','RESOLUTION','C1','C2','C3','EVALUATION',])
-            # print(SPECIFICATION_DF)
+                try:
+                    exec(PROCEDURE_PYDATA, MODULE)
+                except Exception as e:
+                    print("ERROR / ImportLib:", PROCEDURE_ID)
+                    print(e)
+                # print(PROCEDURE_DB)
+                # CMC_DICT = json.loads(PROCEDURE_DB)['CMC']
+                CMC_DF = pd.DataFrame(PROCEDURE_DB['CMC'])
+                SPECIFICATION_DF = pd.DataFrame(SPECIFICATION_DICT[PROCEDURE_ID]) #, columns=['RANGE1_MIN', 'RANGE1_MAX','RANGE2_MIN','RANGE2_MAX','RESOLUTION','C1','C2','C3','EVALUATION',])
+                # print(SPECIFICATION_DF)
 
-            ## TEST TITLE
-            TEST_TITLE = current_test.TEST
-            # print(TEST_TITLE)
-            REPORT.WR_TITLE(REPORT.ROW, 1, f"{CURRENT_DB["TEST_LIST"].index(test)+1} - {TEST_TITLE}")
-            REPORT.ROW_INC()
-
-
-            ## PARAMETERS
-            PARAMETERS = current_test.PARAMETERS
-            # print(PARAMETERS)
-            if PARAMETERS: # Hay casos que puede estar vacio
-                REPORT.WR(REPORT.ROW, 1, PARAMETERS, XLS.Font(name='Calibri', size=9, bold=False))
-                REPORT.ROW_WIDTH(REPORT.ROW, 8)
+                ## TEST TITLE
+                TEST_TITLE = current_test.TEST
+                # print(TEST_TITLE)
+                REPORT.WR_TITLE(REPORT.ROW, 1, f"{CURRENT_DB["TEST_LIST"].index(test)+1} - {TEST_TITLE}")
                 REPORT.ROW_INC()
 
-            # print()
 
-                    ## CALIBRATION CONTENT
-                    REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT", "UNCERTAINTY"])
-                    for header in HEADERS_NOVISIBLE:
-                        REPORT.WR_HEADER(REPORT.ROW, header.value, header.name)
+                ## PARAMETERS
+                PARAMETERS = current_test.PARAMETERS
+                # print(PARAMETERS)
+                if PARAMETERS: # Hay casos que puede estar vacio
+                    REPORT.WR(REPORT.ROW, 1, PARAMETERS, XLS.FONTS.CAPTION.value)
+                    REPORT.ROW_WIDTH(REPORT.ROW, 10)
                     REPORT.ROW_INC()
 
-            CALIBRATION_DF = pd.DataFrame(current_test.CALIBRATION)
-            for loc in CALIBRATION_DF.index:
-                # print(dict(CALIBRATION_DF.loc[loc]))
-                ROW_DATA = dict(CALIBRATION_DF.loc[loc])
-                # SPECIFICATION = TABLE_DATA.GET_VALUE(SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                # CMC = TABLE_DATA.GET_VALUE(CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                SPECIFICATION = 0.0
-                if MODULE.get("SPECIFICATION"):
-                    SPECIFICATION = MODULE['SPECIFICATION'](SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                CMC = 0.0
-                if MODULE.get("CMC"):
-                    CMC = MODULE['CMC'](CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                # print(SPECIFICATION, CMC)
+                # print()
 
-                ## REPORT
-                REPORT.WR(REPORT.ROW, 1, PROCEDURE_DB['REPORT_FORMAT']['PARAMETERS']['PARAMETERS'].format(**ROW_DATA))
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.PROCEDURE_ID.value, PROCEDURE_ID)
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.RANGE.value, ROW_DATA['RANGE'])
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE1.value, ROW_DATA['VALUE1'])
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE2.value, ROW_DATA['VALUE2'])
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.SPECIFICATION.value, SPECIFICATION)
-                REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.CMC.value, CMC)
+                ## CALIBRATION CONTENT
+                REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT", "UNCERTAINTY"])
+                for header in HEADERS_NOVISIBLE:
+                    REPORT.WR_HEADER(REPORT.ROW, header.value, header.name)
                 REPORT.ROW_INC()
-                
-            REPORT.ROW_INC()
-            REPORT.SAVE()
-        
-        holder.download_button(
-            label="📩 DOWNLOAD .xlsx File",
-            data=open(path_file, "rb").read(),
-            file_name=f'{MODEL_ID}.xlsx',
-            mime="calcs/xlsx",
-            # use_container_width=True
-        )
-        os.remove(path_file)
+
+                CALIBRATION_DF = pd.DataFrame(current_test.CALIBRATION)
+                for loc in CALIBRATION_DF.index:
+                    # print(dict(CALIBRATION_DF.loc[loc]))
+                    ROW_DATA = dict(CALIBRATION_DF.loc[loc])
+                    if MODULE.get("SPECIFICATION"):
+                        SPECIFICATION = MODULE['SPECIFICATION'](SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                    else:
+                        SPECIFICATION = TABLE_DATA.GET_VALUE(SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                    if MODULE.get("CMC"):
+                        CMC = MODULE['CMC'](CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                    else:
+                        CMC = TABLE_DATA.GET_VALUE(CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                    # print(SPECIFICATION, CMC)
+
+                    ## REPORT
+                    try:
+                        REPORT.WR(REPORT.ROW, 1, PROCEDURE_DB['REPORT_FORMAT']['PARAMETERS']['PARAMETERS'].format(**ROW_DATA), FONT=XLS.FONTS.CAPTION.value)
+                    except:
+                        REPORT.WR(REPORT.ROW, 1, "RANGE: {RANGE} | NOMINAL: {VALUE1}".format(**ROW_DATA), FONT=XLS.FONTS.CAPTION.value)
+                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.PROCEDURE_ID.value, PROCEDURE_ID)
+                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.RANGE.value, ROW_DATA['RANGE'])
+                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE1.value, ROW_DATA['VALUE1'])
+                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE2.value, ROW_DATA['VALUE2'])
+                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.SPECIFICATION.value, SPECIFICATION)
+                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.CMC.value, CMC)
+                    REPORT.ROW_INC()
+
+                del MODULE  
+                REPORT.ROW_INC()
+                REPORT.SAVE()
+            
+            holder.download_button(
+                label="📩 DOWNLOAD .xlsx File",
+                data=open(path_file, "rb").read(),
+                file_name=f'{MODEL_ID}.xlsx',
+                mime="calcs/xlsx",
+                use_container_width=True
+            )
+            os.remove(path_file)
 
 
 ## PAGE

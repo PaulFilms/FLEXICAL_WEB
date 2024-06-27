@@ -194,12 +194,34 @@ class FORMS:
             FORMS.FIELD("DEFAULT TEST TITLE", "", st.text_input, True),
             FORMS.FIELD("INFO", "", st.text_area, True),
         ]
+        DB_DEFAULT = {
+            'REPORT_FORMAT': {
+                "UNITS": {
+                    "RANGE_TX": None,
+                    "RANGE": None,
+                    "VALUE1": None,
+                    "VALUE2": None,
+                    "MEASURE": None,
+                    "DEVIATION": None,
+                    "SPECIFICATION": None,
+                    "UNCERTAINTY": None,
+                    "CMC": None
+                },
+                "PARAMETERS": {
+                    "PARAMETERS": "RANGE: {RANGE} | NOMINAL: {VALUE1}",
+                    "MEASURE": "{DEVIATION}",
+                    "UNCERTAINTY": "{UNCERTAINTY:.1E}",
+                    "LIMIT_ERROR": "± {SPECIFICATION:.1E}"
+                }
+            }
+        }
         FORMS._GET_FIELDS(FIELDS)
         if st.session_state.FORM_BTN:
             st.session_state.FORM_FIELDS['Id'] = st.session_state.FORM_FIELDS['Id'].replace(chr(32), str()).upper()
             # st.session_state.FORM_FIELDS
             if FORMS._CHECK(FIELDS):
                 st.session_state.FORM_FIELDS['TITLE'] = st.session_state.FORM_FIELDS.pop('DEFAULT TEST TITLE')
+                st.session_state.FORM_FIELDS['DB'] = DB_DEFAULT
                 FORMS._INSERT(st.session_state.TABLE, st.session_state.FORM_FIELDS)
 
     @st.experimental_dialog("📄 NEW TEMPLATE")

@@ -85,6 +85,7 @@ class FONTS(Enum):
     TITLE = Font(name='Calibri', size=12, bold=True)
     HEADER = Font(name='Calibri', size=10, bold=True)
     MAIN = Font(name='Calibri', size=10, bold=False)
+    CAPTION = Font(name='Calibri', size=8, bold=False)
 
 ''' OPENPYXL REPORT
 ________________________________________________________________________________________________ '''
