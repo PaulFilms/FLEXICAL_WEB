@@ -23,6 +23,7 @@ __author__ = 'PABLO GONZALEZ PILA <pablogonzalezpila@gmail.com>'
 
 ''' SYSTEM LIBRARIES '''
 import os
+import locale
 from enum import Enum
 from typing import List
 
@@ -54,6 +55,12 @@ def COLUMN_STR(COLUMN: int) -> str:
     '''
     letter = xls.utils.get_column_letter(COLUMN)
     return letter
+
+def OS_GET_DECIMAL() -> str:
+    '''
+    Get the decimal separator used by the system
+    '''
+    return str(locale.localeconv()['decimal_point'])
 
 class ALIGN_H(Enum):
     '''
@@ -202,7 +209,7 @@ class XLSREPORT:
         '''
         return self.WS.cell(row=ROW, column=COLUMN).value
 
-    def WR(self, ROW: int, COLUMN: int, VALUE = str(), FONT: Font = FONTS.MAIN.value):
+    def WR(self, ROW: int, COLUMN: int, VALUE = any, FONT: Font = FONTS.MAIN.value):
         '''
         Type the selected cell in specific formatting
         - `size:` Font Size (10)
@@ -242,6 +249,12 @@ class XLSREPORT:
         for head in HEADERS:
             self.WR_HEADER(ROW=ROW, COLUMN=COLUMN_INIT+HEADERS.index(head), VALUE=head, vertical_alignment=vertical_alignment, wrap_text=wrap_text)
         self.ROW_WIDTH(ROW, 35)
+    
+    def WR_SCI_NUMBER(self, ROW: int, COLUMN: int, VALUE = float):
+        self.WS.cell(ROW, COLUMN).value = VALUE
+        self.WS.cell(ROW, COLUMN).alignment = self.ALIGN
+        self.WS.cell(ROW, COLUMN).font = FONTS.MAIN.value
+        self.WS.cell(ROW, COLUMN).number_format = f'0.0E+0'
 
     def LOW_BORDER(self, ROW=1, col_ini=1, col_fin=300):
         '''

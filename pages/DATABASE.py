@@ -197,7 +197,7 @@ class FORMS:
         DB_DEFAULT = {
             'REPORT_FORMAT': {
                 "UNITS": {
-                    "RANGE_TX": None,
+                    # "RANGE_TX": None,
                     "RANGE": None,
                     "VALUE1": None,
                     "VALUE2": None,

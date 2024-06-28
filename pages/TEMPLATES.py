@@ -121,38 +121,45 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
     ## TABLE TEST
     DATAFRAME = pd.DataFrame(DB['TEST_LIST'], columns=['TEST', 'PARAMETERS', 'CONFIG', 'INFO', 'PROCEDURE_ID'])
 
-    TBL_TEST = st.dataframe(
-        data=DATAFRAME, 
-        hide_index=True,
-        on_select="rerun", # Con esta opcion aparece el selector de fila
-        selection_mode=['single-row'], # "multi-column" "multi-row"
-        use_container_width=True,
-    )
+    col12, col22 = st.columns([9,1])
 
-    col13, col23, col33 = st.columns(3)
+    with col12:
+        TBL_TEST = st.dataframe(
+            data=DATAFRAME, 
+            hide_index=True,
+            on_select="rerun", # Con esta opcion aparece el selector de fila
+            selection_mode=['single-row'], # "multi-column" "multi-row"
+            use_container_width=True,
+        )
+    
+    with col22:
+        with st.popover(USUAL_ICONS.EXPANDER.value):
+            if st.button(label='➕ ADD TEST', use_container_width=True):
+                FORM_NEW()
+    
+    # col13, col23, col33 = st.columns(3)
 
-    with col13:
-        if st.button(label='➕ ADD TEST', use_container_width=True):
-            FORM_NEW()
+    # with col13:
+
+            if len(TBL_TEST.selection.rows) == 1:
+                loc = TBL_TEST.selection.rows[0]
+                test = TEMPLATE.TEST(**DB["TEST_LIST"][loc])
+
+                # with col23:
+                if st.button(label='✏️ EDIT TEST', use_container_width=True):
+                    FORM_EDIT(test, loc)
+                
+                # with col33:
+                if st.button(label='➖ DEL TEST', use_container_width=True):
+                    del DB['TEST_LIST'][loc]
+                    try:
+                        SQL_UPDATE_DB("TEMPLATES", ID, DB)
+                        st.session_state.TEMPLATES += 1
+                        st.rerun()
+                    except Exception as e:
+                        INFOBOX(e)
 
     if len(TBL_TEST.selection.rows) == 1:
-        loc = TBL_TEST.selection.rows[0]
-        test = TEMPLATE.TEST(**DB["TEST_LIST"][loc])
-
-        with col23:
-            if st.button(label='✏️ EDIT TEST', use_container_width=True):
-                FORM_EDIT(test, loc)
-        
-        with col33:
-            if st.button(label='➖ DEL TEST', use_container_width=True):
-                del DB['TEST_LIST'][loc]
-                try:
-                    SQL_UPDATE_DB("TEMPLATES", ID, DB)
-                    st.session_state.TEMPLATES += 1
-                    st.rerun()
-                except Exception as e:
-                    INFOBOX(e)
-
         st.text("")
         DF_CALIBRATION = pd.DataFrame(test.CALIBRATION, columns=[field.name for field in TEMPLATE.MEASURE])
         DF_CALIBRATION = DF_CALIBRATION.reset_index()
@@ -180,10 +187,17 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
         PROCEDURE_ID = 9
         RANGE_TX = 11
         RANGE = 12
-        VALUE1 = 13
-        VALUE2 = 14
-        CMC = 15
-        SPECIFICATION = 16
+        VALUE1 = 14
+        VALUE2 = 16
+        INDICATION = 18
+        MEASURE = 20
+        SPECIFICATION = 22
+        CMC = 24
+        UNCERTAINTY = 26
+        U = 28
+        TYPB = 30
+        TYPA = 32
+        ACQUISITIONS = 34
 
     def FORMAT(REPORT: XLS.XLSREPORT) -> None:
         '''
@@ -316,7 +330,7 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
         REPORT.WR(REPORT.ROW, 1, "UGB1 , u", FONT1)
         REPORT.WR(REPORT.ROW, 2, r"Measurement results marked as UGB1 show conformity with a probability of >50 % and <95 %.", FONT2)
         REPORT.ROW_INC()
-        REPORT.WR(REPORT.ROW, 1, "UGB2 , u", FONT1)
+        REPORT.WR(REPORT.ROW, 1, "UGB2 , ü", FONT1)
         REPORT.WR(REPORT.ROW, 2, r"Measurement results marked as UGB2 show non-conformity with a probability of >50 % and <95 %.", FONT2)
         REPORT.ROW_INC()
         REPORT.ROW_WIDTH(REPORT.ROW, 5)
@@ -397,21 +411,22 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
                 REPORT.WR_TITLE(REPORT.ROW, 1, f"{CURRENT_DB["TEST_LIST"].index(test)+1} - {TEST_TITLE}")
                 REPORT.ROW_INC()
 
-
                 ## PARAMETERS
                 PARAMETERS = current_test.PARAMETERS
                 # print(PARAMETERS)
                 if PARAMETERS: # Hay casos que puede estar vacio
                     REPORT.WR(REPORT.ROW, 1, PARAMETERS, XLS.FONTS.CAPTION.value)
-                    REPORT.ROW_WIDTH(REPORT.ROW, 10)
+                    # REPORT.ROW_WIDTH(REPORT.ROW, 10)
                     REPORT.ROW_INC()
 
                 # print()
 
                 ## CALIBRATION CONTENT
-                REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT", "UNCERTAINTY"])
+                REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT OF ERROR", "UNCERTAINTY"])
                 for header in HEADERS_NOVISIBLE:
                     REPORT.WR_HEADER(REPORT.ROW, header.value, header.name)
+                if MODULE.get("RESULT_ID"):
+                    REPORT.WR_HEADER(REPORT.ROW, 3, MODULE["RESULT_ID"])
                 REPORT.ROW_INC()
 
                 CALIBRATION_DF = pd.DataFrame(current_test.CALIBRATION)
@@ -429,20 +444,41 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
                     # print(SPECIFICATION, CMC)
 
                     ## REPORT
+                    REPORT.WR(REPORT.ROW, 4, f'={XLS.get_column_letter(HEADERS_NOVISIBLE.SPECIFICATION.value)}{REPORT.ROW}')
+                    REPORT.WS.cell(REPORT.ROW, 4).number_format = f'0.0E+0 "{PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.SPECIFICATION.name]}"'
+                    REPORT.WR(REPORT.ROW, 5, f'={XLS.get_column_letter(HEADERS_NOVISIBLE.UNCERTAINTY.value)}{REPORT.ROW}')
+                    REPORT.WS.cell(REPORT.ROW, 5).number_format = f'0.0E+0 "{PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.UNCERTAINTY.name]}"'
+                    
+                    formula = rf'=IF(OR({XLS.get_column_letter(HEADERS_NOVISIBLE.CMC.value)}{REPORT.ROW}=0,ISBLANK({XLS.get_column_letter(HEADERS_NOVISIBLE.CMC.value)}{REPORT.ROW})),"{chr(123)}g{chr(125)}","")'
+                    REPORT.WR(REPORT.ROW, 7, formula)
                     try:
                         REPORT.WR(REPORT.ROW, 1, PROCEDURE_DB['REPORT_FORMAT']['PARAMETERS']['PARAMETERS'].format(**ROW_DATA), FONT=XLS.FONTS.CAPTION.value)
                     except:
                         REPORT.WR(REPORT.ROW, 1, "RANGE: {RANGE} | NOMINAL: {VALUE1}".format(**ROW_DATA), FONT=XLS.FONTS.CAPTION.value)
+                    ## NO VISIBLE
                     REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.PROCEDURE_ID.value, PROCEDURE_ID)
-                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.RANGE.value, ROW_DATA['RANGE'])
-                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE1.value, ROW_DATA['VALUE1'])
-                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE2.value, ROW_DATA['VALUE2'])
-                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.SPECIFICATION.value, SPECIFICATION)
-                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.CMC.value, CMC)
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.RANGE.value, ROW_DATA['RANGE'])
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.VALUE1.value, ROW_DATA['VALUE1'])
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.VALUE2.value, ROW_DATA['VALUE2'])
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.SPECIFICATION.value, SPECIFICATION)
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.CMC.value, CMC)
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value, f'=IF(ISBLANK({XLS.get_column_letter(HEADERS_NOVISIBLE.CMC.value)}{REPORT.ROW}),{XLS.get_column_letter(HEADERS_NOVISIBLE.U.value)}{REPORT.ROW},MAX({XLS.get_column_letter(HEADERS_NOVISIBLE.CMC.value)}{REPORT.ROW},{XLS.get_column_letter(HEADERS_NOVISIBLE.U.value)}{REPORT.ROW}))')
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.TYPA.value, f'=UNCER_TIP_A({XLS.get_column_letter(HEADERS_NOVISIBLE.TYPA.value+2)}{REPORT.ROW}:{XLS.get_column_letter(HEADERS_NOVISIBLE.TYPA.value+7)}{REPORT.ROW})')
+                    ## UNITS
+                    try:
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.RANGE.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.RANGE.name])
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE1.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.VALUE1.name])
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE2.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.VALUE2.name])
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.SPECIFICATION.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.SPECIFICATION.name])
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.CMC.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.CMC.name])
+                    except:
+                        print("ERROR UNITS:", PROCEDURE_ID)
+                    
                     REPORT.ROW_INC()
-
+                    
                 del MODULE  
                 REPORT.ROW_INC()
+                REPORT.PAGE_BREAK(REPORT.ROW)
                 REPORT.SAVE()
             
             holder.download_button(
@@ -548,7 +584,6 @@ if TEMPLATE_ID:
     st.subheader('JSON DB DATA:', divider='blue')
     
     DB_EDITOR("TEMPLATES", TEMPLATE_ID, CURRENT_TEMPLATE["DB"])
-
 
 
 

@@ -67,12 +67,8 @@ class PROCEDURE:
         DEVIATION: str = None
         SPECIFICATION: str = None
         UNCERTAINTY: str = None
-        # RESULT: str = None
         CMC: str = None
         def toDict(self) -> Dict[str, any]:
-            '''
-            Get a python dictionary from the object
-            '''
             return asdict(self)
 
 tbl_cmc_config={
