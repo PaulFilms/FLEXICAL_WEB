@@ -93,6 +93,10 @@ def REPORT_FORMAT(ID: str, DB: dict) -> None:
 
     @st.experimental_dialog('✏️ EDITOR', width='small')
     def EDITOR():
+        st.text("TYPE OF RESULT")
+        result_types = [result.name for result in RESULTS.TYPES]
+        if not DB["REPORT_FORMAT"].get("RESULT_TYPE"): DB["REPORT_FORMAT"]["RESULT_TYPE"] = "DEVIATION"
+        result_type = st.selectbox("result_type", label_visibility='collapsed', options=[result.name for result in RESULTS.TYPES], index=result_types.index(DB["REPORT_FORMAT"]["RESULT_TYPE"]))
         st.text("PARAMETERS")
         serie_parameters = st.data_editor(
             data=pd.Series(PROCEDURE.dict_parameters(**DB["REPORT_FORMAT"]['PARAMETERS']).toDict(), name="VALUE"),
@@ -110,6 +114,7 @@ def REPORT_FORMAT(ID: str, DB: dict) -> None:
             use_container_width=True
         )
         if st.button(label="🔄 UPDATE"):
+            DB["REPORT_FORMAT"]["RESULT_TYPE"] = result_type
             DB["REPORT_FORMAT"]["PARAMETERS"] = serie_parameters.to_dict()
             DB["REPORT_FORMAT"]["UNITS"] = serie_units.to_dict()
             try:

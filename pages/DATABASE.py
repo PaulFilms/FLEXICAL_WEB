@@ -196,6 +196,7 @@ class FORMS:
         ]
         DB_DEFAULT = {
             'REPORT_FORMAT': {
+                "RESULT_TYPE": "DEVIATION",
                 "UNITS": {
                     # "RANGE_TX": None,
                     "RANGE": None,

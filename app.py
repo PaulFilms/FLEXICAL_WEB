@@ -256,6 +256,21 @@ def TBL_EDITOR(DATAFRAME: pd.DataFrame) -> Tuple[pd.DataFrame, bool]:
     
     return TABLE_EDITOR, btn_update
 
+class RESULTS:
+    '''
+    Set of Functions and Classes to Get and Define a Result of a Calibration
+    
+    `Info:`
+        - BUG: No trabajar con pandas
+    '''
+    class TYPES(Enum):
+        CHECK = 0
+        MEASURE = auto()
+        DEVIATION = auto()
+        MAXIMUN = auto()
+        MINIMUN = auto()
+        REFERENCE = auto()
+
 def DB_EDITOR(TABLE: str, ID: str, DB: dict):
     col12, col22 = st.columns([9,1])
     with col12:
@@ -405,7 +420,7 @@ class TABLE_DATA:
         EVALUATION = auto()
     
     @staticmethod
-    def GET_VALUE(DATAFRAME: pd.DataFrame, VALUE1: Union[int, float], VALUE2: Union[int, float] = None) -> float:
+    def GET_VALUE(DATAFRAME: pd.DataFrame, VALUE1: Union[int, float], VALUE2: Union[int, float] = None, ABS: bool = True) -> float:
         '''
         Returns a calculated value from the selected DataFrame
 
@@ -413,7 +428,14 @@ class TABLE_DATA:
             - DATAFRAME: pd.DataFrame
             - VALUE1: Union[int, float]
             - VALUE2: Union[int, float]
+            - **ABS: bool = True (Default)
         '''
+        ## ABS VALUES
+        if ABS:
+            VALUE1 = abs(VALUE1)
+            if VALUE2:
+                VALUE2 = abs(VALUE2)
+        
         ## CHECK DATA FRAME
         if not all(field.name in DATAFRAME.columns for field in TABLE_DATA.FIELDS):
             # print("TBL_CALC: Necessary fields not available")
@@ -462,6 +484,49 @@ class TABLE_DATA:
             print("TBL_CALC ERROR:")
             print(e)
             return None
+    
+    def FILTER_VALUE(DATAFRAME: pd.DataFrame, COLUMN: str, VALUE1: Union[int, float], VALUE2: Union[int, float] = None, ABS: bool = True) -> float:
+        '''
+        '''
+        ## ABS VALUES
+        if ABS:
+            VALUE1 = abs(VALUE1)
+            if VALUE2:
+                VALUE2 = abs(VALUE2)
+
+        ## CHECK DATA FRAME
+        if not all(field.name in DATAFRAME.columns for field in TABLE_DATA.FIELDS):
+            # print("TBL_CALC: Necessary fields not available")
+            return None
+        
+        ## RANGE 1
+        if VALUE1 == None or pd.isnull(VALUE1):
+            return None
+        if VALUE1 == DATAFRAME[TABLE_DATA.FIELDS.RANGE1_MIN.name].min():
+            DF_FILTER: pd.DataFrame = DATAFRAME[DATAFRAME[TABLE_DATA.FIELDS.RANGE1_MIN.name] == VALUE1]
+        else:
+            cond1 = (VALUE1 > DATAFRAME[TABLE_DATA.FIELDS.RANGE1_MIN.name])
+            cond2 = (VALUE1 <= DATAFRAME[TABLE_DATA.FIELDS.RANGE1_MAX.name])
+            DF_FILTER: pd.DataFrame = DATAFRAME[cond1 & cond2]
+        if len(DF_FILTER) == 0:
+            return None
+
+        ## RANGE 2
+        check1: bool = pd.isnull(DATAFRAME[TABLE_DATA.FIELDS.RANGE2_MIN.name].min())
+        check2: bool = pd.isnull(DATAFRAME[TABLE_DATA.FIELDS.RANGE2_MAX.name].max())
+        if check1 == False or check2 == False:
+            if VALUE2 == None or pd.isnull(VALUE2):
+                return None
+            if VALUE2 == DF_FILTER[TABLE_DATA.FIELDS.RANGE2_MIN.name].min():
+                DF_FILTER = DF_FILTER[DF_FILTER[TABLE_DATA.FIELDS.RANGE2_MIN.name] == VALUE2]
+            else:
+                cond1 = (VALUE2 > DF_FILTER[TABLE_DATA.FIELDS.RANGE2_MIN.name])
+                cond2 = (VALUE2 <= DF_FILTER[TABLE_DATA.FIELDS.RANGE2_MAX.name])
+                DF_FILTER = DF_FILTER[cond1 & cond2]
+            if len(DF_FILTER) != 1:
+                return None
+
+        return DF_FILTER.iloc[0][COLUMN]
 
 @dataclass
 class UNIT:

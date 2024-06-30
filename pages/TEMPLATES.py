@@ -181,23 +181,94 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
             except Exception as e:
                 INFOBOX(e)
 
+
+from openpyxl.styles import PatternFill, Protection
+from openpyxl.formatting.rule import FormulaRule
+
+
 def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
 
     class HEADERS_NOVISIBLE(Enum):
-        PROCEDURE_ID = 9
-        RANGE_TX = 11
-        RANGE = 12
-        VALUE1 = 14
-        VALUE2 = 16
-        INDICATION = 18
-        MEASURE = 20
-        SPECIFICATION = 22
-        CMC = 24
-        UNCERTAINTY = 26
-        U = 28
-        TYPB = 30
-        TYPA = 32
-        ACQUISITIONS = 34
+        ACQ_MEASURE = 9
+        ACQ_INDICATION = 20
+        PROCEDURE_ID = 32
+        MEAS_TYPE = 33
+        NOT_INSTALLED = 34
+        RESULT = 35
+        RANGE_TX = 38
+        RANGE = 40
+        VALUE1 = 42
+        VALUE2 = 44
+        INDICATION = 46
+        MEASURE = 48
+        DEVIATION = 50
+        SPECIFICATION = 52
+        CMC = 54
+        UNCERTAINTY = 56
+        U = 58
+        RESOLUTION = 60
+        TYPB = 62
+        TYPA_MEAS = 64
+        TYPA_INDI = 66
+
+    def EXCEL_FORMULA_RESULT(ROW: int):
+        FORMULA: str = \
+f'''=
+IF(NOT(ISBLANK({XLS.CELL(ROW, HEADERS_NOVISIBLE.NOT_INSTALLED.value)})),"n.i.",
+IF({XLS.CELL(ROW, HEADERS_NOVISIBLE.MEASURE.value)}=FALSE,"n.m.",
+IF({XLS.CELL(ROW, HEADERS_NOVISIBLE.MEAS_TYPE.value)}="DEVIATION",
+    IF(ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)})+ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value)})<ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.SPECIFICATION.value)}),"1 Pass",
+    IF(ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)})+ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value)})=ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.SPECIFICATION.value)}),"2 Pass",
+    IF(AND(ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)})<ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.SPECIFICATION.value)}),ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)})+ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value)})>ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.SPECIFICATION.value)})),"3 UGB1",
+    IF(ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)})=ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.SPECIFICATION.value)}),"4 UGB1",
+    IF(AND(ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)})>ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.SPECIFICATION.value)}),ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)})-ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value)})<ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.SPECIFICATION.value)})),"5 UGB2",
+    IF(AND(ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)})>ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.SPECIFICATION.value)}),ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)})-ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value)})=ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.SPECIFICATION.value)})),"6 UGB2",
+    IF(ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)})-ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value)})>ABS({XLS.CELL(ROW, HEADERS_NOVISIBLE.SPECIFICATION.value)}),"7 Fail",
+))))))))))'''
+        return FORMULA
+
+    def EXCEL_FORMULA_RESULT_HEADER() -> str:
+        FORMULA: str = \
+f'''=
+IF(COUNTIF({XLS.get_column_letter(HEADERS_NOVISIBLE.RESULT.value)}:{XLS.get_column_letter(HEADERS_NOVISIBLE.RESULT.value)},"n.m.")>0,"n.m.",
+IF(COUNTIF({XLS.get_column_letter(HEADERS_NOVISIBLE.RESULT.value)}:{XLS.get_column_letter(HEADERS_NOVISIBLE.RESULT.value)},"7 Fail")>0,"FAIL",
+IF(COUNTIF({XLS.get_column_letter(HEADERS_NOVISIBLE.RESULT.value)}:{XLS.get_column_letter(HEADERS_NOVISIBLE.RESULT.value)},"*UGB2")>0,"UGB2",
+IF(COUNTIF({XLS.get_column_letter(HEADERS_NOVISIBLE.RESULT.value)}:{XLS.get_column_letter(HEADERS_NOVISIBLE.RESULT.value)},"*UGB1")>0,"UGB1",
+"PASS"
+))))'''
+        return FORMULA
+
+    def EXCEL_FORMULA_INDICATION(ROW: int) -> str:
+        FORMULA: str = \
+f'''=
+IF({XLS.CELL(ROW, HEADERS_NOVISIBLE.RESULT.value)}="n.i.","n.i.",
+IF({XLS.CELL(ROW, HEADERS_NOVISIBLE.RESULT.value)}="n.m.","n.m.",
+IF({XLS.CELL(ROW, HEADERS_NOVISIBLE.RESULT.value)}="3 UGB1","u",
+IF({XLS.CELL(ROW, HEADERS_NOVISIBLE.RESULT.value)}="4 UGB1","u",
+IF({XLS.CELL(ROW, HEADERS_NOVISIBLE.RESULT.value)}="5 UGB2","ü",
+IF({XLS.CELL(ROW, HEADERS_NOVISIBLE.RESULT.value)}="6 UGB2","ü",
+IF({XLS.CELL(ROW, HEADERS_NOVISIBLE.RESULT.value)}="7 Fail","FAIL",
+"")))))))'''
+        return FORMULA
+
+    def EXCEL_FORMULA_TYPA(ROW: int, COL_INI: int, COL_FIN: int) -> str:
+        '''
+        =IF(COUNT(AL62:AV62)<2;0;STDEV.S(AL62:AV62)/SQRT((COUNT(AL62:AV62))))
+        '''
+        return f'''=IF(COUNT({XLS.CELL(ROW, COL_INI)}:{XLS.CELL(ROW, COL_FIN)})<2,0,_xlfn.STDEV.S({XLS.CELL(ROW, COL_INI)}:{XLS.CELL(ROW, COL_FIN)})/SQRT((COUNT({XLS.CELL(ROW, COL_INI)}:{XLS.CELL(ROW, COL_FIN)}))))'''
+
+    def EXCEL_FORMULA_DIGITS(ROW: int) -> str:
+        FORMULA: str = \
+f'''=
+IF({XLS.CELL(ROW, HEADERS_NOVISIBLE.RESULT.value)}="n.i.","",
+IF({XLS.CELL(ROW, HEADERS_NOVISIBLE.RESULT.value)}="n.m.","",
+IF(INT(RIGHT(TEXT({XLS.CELL(ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value)},"0E+000"),4))>0,
+TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({XLS.CELL(ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value)},"0E+000"),4))+1)/10^B5,"0,0") & "E+" & INT(RIGHT(TEXT({XLS.CELL(ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value)},"0E+000"),4)),
+TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({XLS.CELL(ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value)},"0E+000"),4))+1),"0," & REPT(0,-INT(RIGHT(TEXT({XLS.CELL(ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value)},"0E+000"),4))+1))
+) & CHAR(32) & {XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value+1)}
+))
+'''
+        return FORMULA
 
     def FORMAT(REPORT: XLS.XLSREPORT) -> None:
         '''
@@ -214,10 +285,20 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
         REPORT.WS.HeaderFooter.oddFooter.left.text = footer
         for col in range(1,6):
             REPORT.COL_WIDTH(col, 20)
-        REPORT.COL_WIDTH(6, 5)
-        REPORT.COL_WIDTH(7, 5)
-        REPORT.COL_WIDTH(8, 30)
+        REPORT.COL_WIDTH(6, 5) # RESULT INDICATION
+        REPORT.COL_WIDTH(7, 5) # ACREDITED
+        REPORT.COL_WIDTH(8, 30) # PROCEDURE
         # REPORT.SAVE()
+        # Crear una regla de formato condicional usando una fórmula
+        # Suponiendo que quieres aplicarlo a la columna H (la columna 8)
+        # rule = FormulaRule(formula=[f'OR($K1="7 Fail", $K1="5 UGB2", $K1="6 UGB2"'], fill=red_fill, stopIfTrue=True)
+
+        # Aplicar el formato condicional al rango de celdas
+        # Aquí se especifica un rango amplio, pero puedes ajustar '1048576' al número de tu última fila
+        red_fill = PatternFill(start_color='FF0000', end_color='FF0000', fill_type='solid')
+        # print(f'OR(${XLS.CELL(1, HEADERS_NOVISIBLE.RESULT.value)}="FAIL"),${XLS.CELL(1, HEADERS_NOVISIBLE.RESULT.value)}="5 UGB2",${XLS.CELL(1, HEADERS_NOVISIBLE.RESULT.value)}="6 UGB2"))')
+        rule = FormulaRule(formula=[f'OR(${XLS.CELL(1, HEADERS_NOVISIBLE.RESULT.value)}="7 Fail",${XLS.CELL(1, HEADERS_NOVISIBLE.RESULT.value)}="5 UGB2",${XLS.CELL(1, HEADERS_NOVISIBLE.RESULT.value)}="6 UGB2")'], fill=red_fill, stopIfTrue=True)
+        REPORT.WS.conditional_formatting.add('H1:H1048576', rule)
 
     def HEADER(REPORT: XLS.XLSREPORT, MODEL_ID):
         SQL = SQL_BY_ROW("MODELS", "Id", MODEL_ID)[0]
@@ -226,13 +307,15 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
         img_results = XLS.Image(img_results_path)
         img_results.width = 263
         img_results.height = 68
-        REPORT.WS.add_image(img_results, XLS.CELL_STR(1, 4))
+        REPORT.WS.add_image(img_results, XLS.CELL(1, 4))
         ##
         REPORT.WR_HEADER(REPORT.ROW, 1, "MANUFACTURER:")
         REPORT.WR(REPORT.ROW, 2, SQL['MANUFACTURER'])
+        REPORT.WR_HEADER(REPORT.ROW, 8, "RESULT:")
         REPORT.ROW_INC()
         REPORT.WR_HEADER(REPORT.ROW, 1, "MODEL:")
         REPORT.WR(REPORT.ROW, 2, SQL['MODEL'])
+        REPORT.WR(REPORT.ROW, 8, EXCEL_FORMULA_RESULT_HEADER())
         REPORT.ROW_INC()
         REPORT.WR_HEADER(REPORT.ROW, 1, "SERIAL Id:")
         # REPORT.WR(REPORT.ROW, 2, SQL['SERIAL'])
@@ -267,7 +350,7 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
         img_results = XLS.Image(img_results_path)
         img_results.width = 491
         img_results.height = 227
-        REPORT.WS.add_image(img_results, XLS.CELL_STR(REPORT.ROW, 1))
+        REPORT.WS.add_image(img_results, XLS.CELL(REPORT.ROW, 1))
         # REPORT.IMAGE_INSERT(REPORT.ROW, 1, )
         REPORT.ROW_INC(13)
         REPORT.WR_TITLE(REPORT.ROW, 1, r"The following abbrevations may be used in this certificate:")
@@ -357,6 +440,47 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
         REPORT.ROW_INC()
         REPORT.SAVE()
 
+    def SUMMARY(REPORT: XLS.XLSREPORT) -> None:
+        REPORT.SHEET_NEW("Summary")
+        REPORT.ROW = 2
+        REPORT.COL_WIDTH(8, 30)
+        # REPORT.SHEET_SELECT('Summary')
+
+        ##
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Certificate No.:"); 
+        REPORT.SET_RANGE_NAME(REPORT.ROW, 2, 'CERTIFICATE')
+        REPORT.ROW_INC(1)
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Date:"); REPORT.ROW_INC(2)
+
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Type Device:"); REPORT.ROW_INC(1)
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Manufacturer:"); REPORT.ROW_INC(1)
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Model:"); REPORT.ROW_INC(1)
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Material No.:"); REPORT.ROW_INC(1)
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Serial Id:"); REPORT.ROW_INC(1)
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Inventory Id"); REPORT.ROW_INC(2)
+
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Scope of Cal."); REPORT.ROW_INC(1)
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Place of Cal."); REPORT.ROW_INC(1)
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Technician Id"); REPORT.ROW_INC(2)
+
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Temperature [ºC]"); REPORT.ROW_INC(1)
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Humidity [%HR]"); REPORT.ROW_INC(1)
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Result:"); REPORT.ROW_INC(2)
+
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Customer:"); REPORT.ROW_INC(1)
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Customer Address:")
+        REPORT.LOW_BORDER(REPORT.ROW,1,10)
+        REPORT.ROW_INC(6)
+
+        REPORT.WR_HEADER(REPORT.ROW, 1, "Standards Used:")
+        REPORT.LOW_BORDER(REPORT.ROW,1,10)
+        REPORT.ROW_INC(1)
+        # REPORT.SAVE()
+
+    def TYPB_TBL(REPORT: XLS.XLSREPORT) -> None:
+        REPORT.SHEET_NEW("TYP_B")
+        REPORT.ROW = 1
+
     st.text("")
     col12, col22 = st.columns(2)
 
@@ -383,6 +507,7 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
             MODEL_DB = SQL_SELECT_DB("MODELS", MODEL_ID)
             SPECIFICATION_DICT = json.loads(MODEL_DB)['SPECIFICATIONS']
             # print(MODEL_ID)
+            STANDARDS = []
 
             ## TEST
             # print()
@@ -393,6 +518,13 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
                 PROCEDURE_DB = json.loads(SQL_PROCEDURE['DB'])
                 PROCEDURE_PYDATA = SQL_PROCEDURE['PYDATA']
                 # print(PROCEDURE_PYDATA)
+
+                ## STANDARDS
+                for standard in PROCEDURE_DB["STANDARDS"]:
+                    if standard not in STANDARDS:
+                        STANDARDS.append(standard)
+
+                ## PYDATA
                 MODULE = {}
                 try:
                     exec(PROCEDURE_PYDATA, MODULE)
@@ -425,6 +557,8 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
                 REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT OF ERROR", "UNCERTAINTY"])
                 for header in HEADERS_NOVISIBLE:
                     REPORT.WR_HEADER(REPORT.ROW, header.value, header.name)
+                REPORT.LOW_BORDER(REPORT.ROW, HEADERS_NOVISIBLE.ACQ_MEASURE.value,HEADERS_NOVISIBLE.ACQ_MEASURE.value+10)
+                REPORT.LOW_BORDER(REPORT.ROW, HEADERS_NOVISIBLE.ACQ_INDICATION.value,HEADERS_NOVISIBLE.ACQ_INDICATION.value+10)
                 if MODULE.get("RESULT_ID"):
                     REPORT.WR_HEADER(REPORT.ROW, 3, MODULE["RESULT_ID"])
                 REPORT.ROW_INC()
@@ -433,6 +567,7 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
                 for loc in CALIBRATION_DF.index:
                     # print(dict(CALIBRATION_DF.loc[loc]))
                     ROW_DATA = dict(CALIBRATION_DF.loc[loc])
+                    RESOLUTION = TABLE_DATA.FILTER_VALUE(SPECIFICATION_DF, 'RESOLUTION', ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
                     if MODULE.get("SPECIFICATION"):
                         SPECIFICATION = MODULE['SPECIFICATION'](SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
                     else:
@@ -444,42 +579,75 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
                     # print(SPECIFICATION, CMC)
 
                     ## REPORT
+                    REPORT.WR(REPORT.ROW, 3, EXCEL_FORMULA_DIGITS(REPORT.ROW))
                     REPORT.WR(REPORT.ROW, 4, f'={XLS.get_column_letter(HEADERS_NOVISIBLE.SPECIFICATION.value)}{REPORT.ROW}')
                     REPORT.WS.cell(REPORT.ROW, 4).number_format = f'0.0E+0 "{PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.SPECIFICATION.name]}"'
                     REPORT.WR(REPORT.ROW, 5, f'={XLS.get_column_letter(HEADERS_NOVISIBLE.UNCERTAINTY.value)}{REPORT.ROW}')
                     REPORT.WS.cell(REPORT.ROW, 5).number_format = f'0.0E+0 "{PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.UNCERTAINTY.name]}"'
-                    
+                    REPORT.WR(REPORT.ROW, 6, EXCEL_FORMULA_INDICATION(REPORT.ROW))
                     formula = rf'=IF(OR({XLS.get_column_letter(HEADERS_NOVISIBLE.CMC.value)}{REPORT.ROW}=0,ISBLANK({XLS.get_column_letter(HEADERS_NOVISIBLE.CMC.value)}{REPORT.ROW})),"{chr(123)}g{chr(125)}","")'
                     REPORT.WR(REPORT.ROW, 7, formula)
                     try:
                         REPORT.WR(REPORT.ROW, 1, PROCEDURE_DB['REPORT_FORMAT']['PARAMETERS']['PARAMETERS'].format(**ROW_DATA), FONT=XLS.FONTS.CAPTION.value)
                     except:
                         REPORT.WR(REPORT.ROW, 1, "RANGE: {RANGE} | NOMINAL: {VALUE1}".format(**ROW_DATA), FONT=XLS.FONTS.CAPTION.value)
+                    
                     ## NO VISIBLE
                     REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.PROCEDURE_ID.value, PROCEDURE_ID)
+                    REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.MEAS_TYPE.value, PROCEDURE_DB['REPORT_FORMAT']['RESULT_TYPE'])
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.RESULT.value, EXCEL_FORMULA_RESULT(REPORT.ROW))
                     REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.RANGE.value, ROW_DATA['RANGE'])
                     REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.VALUE1.value, ROW_DATA['VALUE1'])
                     REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.VALUE2.value, ROW_DATA['VALUE2'])
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.MEASURE.value, f'=IF(COUNT({XLS.get_column_letter(HEADERS_NOVISIBLE.ACQ_MEASURE.value)}{REPORT.ROW}:{XLS.get_column_letter(HEADERS_NOVISIBLE.ACQ_MEASURE.value+9)}{REPORT.ROW})>0,AVERAGE({XLS.get_column_letter(HEADERS_NOVISIBLE.ACQ_MEASURE.value)}{REPORT.ROW}:{XLS.get_column_letter(HEADERS_NOVISIBLE.ACQ_MEASURE.value+9)}{REPORT.ROW}),FALSE)')
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.INDICATION.value, f'=IF(COUNT({XLS.get_column_letter(HEADERS_NOVISIBLE.ACQ_INDICATION.value)}{REPORT.ROW}:{XLS.get_column_letter(HEADERS_NOVISIBLE.ACQ_INDICATION.value+9)}{REPORT.ROW})>0,AVERAGE({XLS.get_column_letter(HEADERS_NOVISIBLE.ACQ_INDICATION.value)}{REPORT.ROW}:{XLS.get_column_letter(HEADERS_NOVISIBLE.ACQ_INDICATION.value+9)}{REPORT.ROW}),{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.VALUE1.value)})')
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.DEVIATION.value, f'=IF({XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.MEASURE.value)}=FALSE,FALSE,{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.MEASURE.value)}-{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.INDICATION.value)})')
                     REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.SPECIFICATION.value, SPECIFICATION)
                     REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.CMC.value, CMC)
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.RESOLUTION.value, RESOLUTION)
                     REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value, f'=IF(ISBLANK({XLS.get_column_letter(HEADERS_NOVISIBLE.CMC.value)}{REPORT.ROW}),{XLS.get_column_letter(HEADERS_NOVISIBLE.U.value)}{REPORT.ROW},MAX({XLS.get_column_letter(HEADERS_NOVISIBLE.CMC.value)}{REPORT.ROW},{XLS.get_column_letter(HEADERS_NOVISIBLE.U.value)}{REPORT.ROW}))')
-                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.TYPA.value, f'=UNCER_TIP_A({XLS.get_column_letter(HEADERS_NOVISIBLE.TYPA.value+2)}{REPORT.ROW}:{XLS.get_column_letter(HEADERS_NOVISIBLE.TYPA.value+7)}{REPORT.ROW})')
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.U.value, f'=2*SQRT(SUM({XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.RESOLUTION.value)}^2,{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.TYPB.value)}^2,{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.TYPA_MEAS.value)}^2,{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.TYPA_INDI.value)}^2))')
+                    # REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.TYPA.value, f'=UNCER_TIP_A({XLS.get_column_letter(HEADERS_NOVISIBLE.TYPA.value+2)}{REPORT.ROW}:{XLS.get_column_letter(HEADERS_NOVISIBLE.TYPA.value+7)}{REPORT.ROW})')
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.TYPA_MEAS.value, EXCEL_FORMULA_TYPA(REPORT.ROW, HEADERS_NOVISIBLE.ACQ_MEASURE.value, HEADERS_NOVISIBLE.ACQ_MEASURE.value+9))   
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.TYPA_INDI.value, EXCEL_FORMULA_TYPA(REPORT.ROW, HEADERS_NOVISIBLE.ACQ_INDICATION.value, HEADERS_NOVISIBLE.ACQ_INDICATION.value+9))   
+                    
                     ## UNITS
                     try:
                         REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.RANGE.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.RANGE.name])
                         REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE1.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.VALUE1.name])
                         REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.VALUE2.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.VALUE2.name])
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.INDICATION.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.MEASURE.name])
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.MEASURE.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.MEASURE.name])
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.DEVIATION.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.MEASURE.name])
                         REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.SPECIFICATION.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.SPECIFICATION.name])
                         REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.CMC.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.CMC.name])
+                        REPORT.WR(REPORT.ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value+1, PROCEDURE_DB['REPORT_FORMAT']['UNITS'][HEADERS_NOVISIBLE.UNCERTAINTY.name])
                     except:
                         print("ERROR UNITS:", PROCEDURE_ID)
+                    
+                    ## PROTECTION
+                    for col in range(HEADERS_NOVISIBLE.PROCEDURE_ID.value, HEADERS_NOVISIBLE.TYPA_INDI.value):
+                        REPORT.WS.cell(REPORT.ROW, col).protection = Protection(locked=True)
+                    for col in range(HEADERS_NOVISIBLE.ACQ_MEASURE.value, HEADERS_NOVISIBLE.ACQ_MEASURE.value+9):
+                        REPORT.WS.cell(REPORT.ROW, col).protection = Protection(locked=False)
                     
                     REPORT.ROW_INC()
                     
                 del MODULE  
                 REPORT.ROW_INC()
                 REPORT.PAGE_BREAK(REPORT.ROW)
-                REPORT.SAVE()
+                # REPORT.SAVE()
+
+            REPORT.WS.protection.sheet = True
+            REPORT.SAVE()
+            SUMMARY(REPORT)
+            
+            for standard in STANDARDS:
+                REPORT.WR(REPORT.ROW, 1, standard)
+                REPORT.ROW_INC()
+
+            ## standards
+            REPORT.SAVE()
             
             holder.download_button(
                 label="📩 DOWNLOAD .xlsx File",
@@ -532,6 +700,7 @@ if TEMPLATE_ID:
     ## __________________________________________________________________________________________________
 
     PRINT_XLSX(CURRENT_TEMPLATE)
+
 
     ## INFO
     ## __________________________________________________________________________________________________

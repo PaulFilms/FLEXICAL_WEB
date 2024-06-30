@@ -36,17 +36,19 @@ from openpyxl.styles import borders
 from openpyxl.styles.borders import Border
 from openpyxl.worksheet import pagebreak
 from openpyxl.utils import get_column_letter
+from openpyxl.workbook.defined_name import DefinedName
+from openpyxl.utils import quote_sheetname, absolute_coordinate
 
 
 ''' OPENPYXL VARIABLES AND FUNCTIONS
 ________________________________________________________________________________________________ '''
 
-def CELL_STR(ROW: int, COLUMN: int) -> str:
+def CELL(ROW: int, COLUMN: int) -> str:
     '''
     Get the Reference String of selected Cell by numbers
     '''
-    col_str = xls.utils.get_column_letter(COLUMN)
-    cellstr = "{}{}".format(col_str, ROW)
+    col_str = get_column_letter(COLUMN)
+    cellstr = f"{col_str}{ROW}"
     return cellstr
 
 def COLUMN_STR(COLUMN: int) -> str:
@@ -93,6 +95,28 @@ class FONTS(Enum):
     HEADER = Font(name='Calibri', size=10, bold=True)
     MAIN = Font(name='Calibri', size=10, bold=False)
     CAPTION = Font(name='Calibri', size=8, bold=False)
+
+def DF_REPORT(DATAFRAME: pd.DataFrame, fileName: str, fontName: str = 'Calibri') -> None:
+    '''
+    Create excel report from selected Pandas DataFrame
+    '''
+    report = XLSREPORT(fileName, fontName)
+    ## HEADERS
+    HEADERS: list = DATAFRAME.columns.values.tolist()
+    report.WR_HEADERS(1, HEADERS, vertical_alignment="top")
+    report.COL_FILTERS()
+    report.LOW_BORDER(report.ROW, col_fin=len(HEADERS)+1)
+    report.ROW_INC()
+    ## DATA
+    for row in range(len(DATAFRAME.index)):
+        row_data = list(DATAFRAME.iloc[row].values)
+        for value in row_data:
+            report.WR(report.ROW, row_data.index(value)+1, value)
+        report.ROW_INC()
+    report.COL_AUTOFIT()
+    ## FIN
+    report.SAVE()
+
 
 ''' OPENPYXL REPORT
 ________________________________________________________________________________________________ '''
@@ -163,6 +187,17 @@ class XLSREPORT:
     
     def SHEET_LIST(self) -> List[str]:
         return self.WB.sheetnames 
+
+    def SET_RANGE_NAME(self, ROW: int, COLUMN: int, NAME: str) -> None:
+        '''
+        BUG: Under Test
+        '''
+        COLUMN_STR = get_column_letter(COLUMN)
+        cell = f"{COLUMN_STR}{ROW}"
+        ref =  f"{quote_sheetname(self.WS.title)}!{absolute_coordinate(cell)}"
+        defn = DefinedName(NAME, attr_text=ref)
+        self.WB.defined_names[NAME] = defn
+
 
     ''' FUNCTIONS '''
 
@@ -251,6 +286,9 @@ class XLSREPORT:
         self.ROW_WIDTH(ROW, 35)
     
     def WR_SCI_NUMBER(self, ROW: int, COLUMN: int, VALUE = float):
+        '''
+        Edit selected cell like sci number format (0.0E+0)
+        '''
         self.WS.cell(ROW, COLUMN).value = VALUE
         self.WS.cell(ROW, COLUMN).alignment = self.ALIGN
         self.WS.cell(ROW, COLUMN).font = FONTS.MAIN.value
@@ -339,26 +377,7 @@ class XLSREPORT:
         self.WS.add_image(img, cell_str)
 
 
-def DF_REPORT(DATAFRAME: pd.DataFrame, fileName: str, fontName: str = 'Calibri') -> None:
-    '''
-    Create excel report from selected Pandas DataFrame
-    '''
-    report = XLSREPORT(fileName, fontName)
-    ## HEADERS
-    HEADERS: list = DATAFRAME.columns.values.tolist()
-    report.WR_HEADERS(1, HEADERS, vertical_alignment="top")
-    report.COL_FILTERS()
-    report.LOW_BORDER(report.ROW, col_fin=len(HEADERS)+1)
-    report.ROW_INC()
-    ## DATA
-    for row in range(len(DATAFRAME.index)):
-        row_data = list(DATAFRAME.iloc[row].values)
-        for value in row_data:
-            report.WR(report.ROW, row_data.index(value)+1, value)
-        report.ROW_INC()
-    report.COL_AUTOFIT()
-    ## FIN
-    report.SAVE()
+
 
 
 ''' UNDER TEST

@@ -35,7 +35,7 @@ if 'LOGIN_STATUS' not in st.session_state:
 
 st.logo(os.path.join(path_resources, r"LOGO2.svg"))
 
-col13, col23, col33 = st.columns([1,2,1])
+col13, col23, col33 = st.columns([1,1,1])
 
 with col23:
     st.image(os.path.join(path_resources, r"LOGO2.svg"), use_column_width=False) # flexical_developer
