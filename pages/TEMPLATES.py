@@ -5,6 +5,7 @@ FLEXICAL v3 | ...
 
 ## PYTHON LIBRARIES
 import os
+from datetime import datetime
 from typing import Dict
 from dataclasses import asdict
 from enum import Enum
@@ -206,10 +207,11 @@ def PRINT_XLSX(CURRENT_TEMPLATE: TEMPLATE.TypeDict) -> None:
         CMC = 54
         UNCERTAINTY = 56
         U = 58
-        RESOLUTION = 60
-        TYPB = 62
-        TYPA_MEAS = 64
-        TYPA_INDI = 66
+        K = 60
+        RESOLUTION = 62
+        TYPB = 64
+        TYPA_MEAS = 66
+        TYPA_INDI = 68
 
     def EXCEL_FORMULA_RESULT(ROW: int):
         FORMULA: str = \
@@ -270,6 +272,15 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
 '''
         return FORMULA
 
+    def EXCEL_FORMULA_FREEDOMDEGREES() -> float:
+        '''
+        FREEDOM_DEGREES
+        =IF(
+        (IF(BN63<>0;(BN63*1)^4/COUNT(I63:R63)-1;0)+IF(BP63<>0;(BP63*1)^4/COUNT(T63:AC63)-1;0))=0;0;
+        BF63^4/(IF(BN63<>0;(BN63*1)^4/COUNT(I63:R63)-1;0)+IF(BP63<>0;(BP63*1)^4/COUNT(T63:AC63)-1;0))
+        )
+        '''
+
     def FORMAT(REPORT: XLS.XLSREPORT) -> None:
         '''
         '''
@@ -283,11 +294,11 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
         # footer.right()
         # REPORT.WS.HeaderFooter.oddFooter.left.font = Font(name='Arial', size=12, bold=True)
         REPORT.WS.HeaderFooter.oddFooter.left.text = footer
-        for col in range(1,6):
+        for col in range(1,7):
             REPORT.COL_WIDTH(col, 20)
         REPORT.COL_WIDTH(6, 5) # RESULT INDICATION
         REPORT.COL_WIDTH(7, 5) # ACREDITED
-        REPORT.COL_WIDTH(8, 30) # PROCEDURE
+        REPORT.COL_WIDTH(8, 15) # PROCEDURE
         # REPORT.SAVE()
         # Crear una regla de formato condicional usando una fórmula
         # Suponiendo que quieres aplicarlo a la columna H (la columna 8)
@@ -310,8 +321,8 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
         REPORT.WS.add_image(img_results, XLS.CELL(1, 4))
         ##
         REPORT.WR_HEADER(REPORT.ROW, 1, "MANUFACTURER:")
-        REPORT.WR(REPORT.ROW, 2, SQL['MANUFACTURER'])
         REPORT.WR_HEADER(REPORT.ROW, 8, "RESULT:")
+        REPORT.WR(REPORT.ROW, 2, SQL['MANUFACTURER'])
         REPORT.ROW_INC()
         REPORT.WR_HEADER(REPORT.ROW, 1, "MODEL:")
         REPORT.WR(REPORT.ROW, 2, SQL['MODEL'])
@@ -321,7 +332,9 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
         # REPORT.WR(REPORT.ROW, 2, SQL['SERIAL'])
         REPORT.ROW_INC()
         REPORT.WR_HEADER(REPORT.ROW, 1, "DATE:")
-        # REPORT.WR(REPORT.ROW, 2, SYS.DATE_GET_TODAY())
+        REPORT.WR(REPORT.ROW, 2, datetime.now().strftime(r'%Y-%m-%d'))
+        REPORT.ROW_INC()
+        REPORT.WR_HEADER(REPORT.ROW, 1, "CALIBRATION Id:")
         REPORT.ROW_INC()
         REPORT.LOW_BORDER(REPORT.ROW, col_fin=8)
         REPORT.ROW_INC(2)
@@ -506,18 +519,16 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
 
             MODEL_DB = SQL_SELECT_DB("MODELS", MODEL_ID)
             SPECIFICATION_DICT = json.loads(MODEL_DB)['SPECIFICATIONS']
-            # print(MODEL_ID)
             STANDARDS = []
 
             ## TEST
-            # print()
             for test in CURRENT_DB["TEST_LIST"]:
                 current_test = TEMPLATE.TEST(**test)
                 PROCEDURE_ID = current_test.PROCEDURE_ID
                 SQL_PROCEDURE = SQL_BY_ROW("PROCEDURES", "Id", PROCEDURE_ID)[0]
-                PROCEDURE_DB = json.loads(SQL_PROCEDURE['DB'])
+                if isinstance(SQL_PROCEDURE['DB'], dict): PROCEDURE_DB = SQL_PROCEDURE['DB']
+                if isinstance(SQL_PROCEDURE['DB'], str): PROCEDURE_DB = json.loads(SQL_PROCEDURE['DB'])
                 PROCEDURE_PYDATA = SQL_PROCEDURE['PYDATA']
-                # print(PROCEDURE_PYDATA)
 
                 ## STANDARDS
                 for standard in PROCEDURE_DB["STANDARDS"]:
@@ -531,7 +542,6 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
                 except Exception as e:
                     print("ERROR / ImportLib:", PROCEDURE_ID)
                     print(e)
-                # print(PROCEDURE_DB)
                 # CMC_DICT = json.loads(PROCEDURE_DB)['CMC']
                 CMC_DF = pd.DataFrame(PROCEDURE_DB['CMC'])
                 SPECIFICATION_DF = pd.DataFrame(SPECIFICATION_DICT[PROCEDURE_ID]) #, columns=['RANGE1_MIN', 'RANGE1_MAX','RANGE2_MIN','RANGE2_MAX','RESOLUTION','C1','C2','C3','EVALUATION',])
@@ -539,7 +549,6 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
 
                 ## TEST TITLE
                 TEST_TITLE = current_test.TEST
-                # print(TEST_TITLE)
                 REPORT.WR_TITLE(REPORT.ROW, 1, f"{CURRENT_DB["TEST_LIST"].index(test)+1} - {TEST_TITLE}")
                 REPORT.ROW_INC()
 
@@ -550,8 +559,6 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
                     REPORT.WR(REPORT.ROW, 1, PARAMETERS, XLS.FONTS.CAPTION.value)
                     # REPORT.ROW_WIDTH(REPORT.ROW, 10)
                     REPORT.ROW_INC()
-
-                # print()
 
                 ## CALIBRATION CONTENT
                 REPORT.WR_HEADERS(REPORT.ROW, 1, ["TEST PARAMETERS", "", "RESULT MEAS.", "LIMIT OF ERROR", "UNCERTAINTY"])
@@ -565,7 +572,6 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
 
                 CALIBRATION_DF = pd.DataFrame(current_test.CALIBRATION)
                 for loc in CALIBRATION_DF.index:
-                    # print(dict(CALIBRATION_DF.loc[loc]))
                     ROW_DATA = dict(CALIBRATION_DF.loc[loc])
                     RESOLUTION = TABLE_DATA.FILTER_VALUE(SPECIFICATION_DF, 'RESOLUTION', ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
                     if MODULE.get("SPECIFICATION"):
@@ -576,7 +582,6 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
                         CMC = MODULE['CMC'](CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
                     else:
                         CMC = TABLE_DATA.GET_VALUE(CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                    # print(SPECIFICATION, CMC)
 
                     ## REPORT
                     REPORT.WR(REPORT.ROW, 3, EXCEL_FORMULA_DIGITS(REPORT.ROW))
@@ -606,7 +611,7 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
                     REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.CMC.value, CMC)
                     REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.RESOLUTION.value, RESOLUTION)
                     REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.UNCERTAINTY.value, f'=IF(ISBLANK({XLS.get_column_letter(HEADERS_NOVISIBLE.CMC.value)}{REPORT.ROW}),{XLS.get_column_letter(HEADERS_NOVISIBLE.U.value)}{REPORT.ROW},MAX({XLS.get_column_letter(HEADERS_NOVISIBLE.CMC.value)}{REPORT.ROW},{XLS.get_column_letter(HEADERS_NOVISIBLE.U.value)}{REPORT.ROW}))')
-                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.U.value, f'=2*SQRT(SUM({XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.RESOLUTION.value)}^2,{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.TYPB.value)}^2,{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.TYPA_MEAS.value)}^2,{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.TYPA_INDI.value)}^2))')
+                    REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.U.value, f'=2*SQRT(SUM(({XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.RESOLUTION.value)}/(2*SQRT(3)))^2,{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.TYPB.value)}^2,{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.TYPA_MEAS.value)}^2,{XLS.CELL(REPORT.ROW, HEADERS_NOVISIBLE.TYPA_INDI.value)}^2))')
                     # REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.TYPA.value, f'=UNCER_TIP_A({XLS.get_column_letter(HEADERS_NOVISIBLE.TYPA.value+2)}{REPORT.ROW}:{XLS.get_column_letter(HEADERS_NOVISIBLE.TYPA.value+7)}{REPORT.ROW})')
                     REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.TYPA_MEAS.value, EXCEL_FORMULA_TYPA(REPORT.ROW, HEADERS_NOVISIBLE.ACQ_MEASURE.value, HEADERS_NOVISIBLE.ACQ_MEASURE.value+9))   
                     REPORT.WR_SCI_NUMBER(REPORT.ROW, HEADERS_NOVISIBLE.TYPA_INDI.value, EXCEL_FORMULA_TYPA(REPORT.ROW, HEADERS_NOVISIBLE.ACQ_INDICATION.value, HEADERS_NOVISIBLE.ACQ_INDICATION.value+9))   
