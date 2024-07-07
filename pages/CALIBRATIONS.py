@@ -41,6 +41,10 @@ with st.container(border=True):
     st.caption('''
         In the following updates, this page will manage calibrations, projects/campaigns, and everything related to calibrations
     ''')
+    st.caption('''
+        * Projects / Campaigns
+        * Expired Devices
+    ''')
 
 st.divider()
 

@@ -1,5 +1,5 @@
 '''
-FLEXICAL v3 | ...
+FLEXICAL v3 | TEMPLATES
 
 '''
 
@@ -137,20 +137,14 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
         with st.popover(USUAL_ICONS.EXPANDER.value):
             if st.button(label='➕ ADD TEST', use_container_width=True):
                 FORM_NEW()
-    
-    # col13, col23, col33 = st.columns(3)
-
-    # with col13:
 
             if len(TBL_TEST.selection.rows) == 1:
                 loc = TBL_TEST.selection.rows[0]
                 test = TEMPLATE.TEST(**DB["TEST_LIST"][loc])
 
-                # with col23:
                 if st.button(label='✏️ EDIT TEST', use_container_width=True):
                     FORM_EDIT(test, loc)
                 
-                # with col33:
                 if st.button(label='➖ DEL TEST', use_container_width=True):
                     del DB['TEST_LIST'][loc]
                     try:
@@ -159,10 +153,28 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
                         st.rerun()
                     except Exception as e:
                         INFOBOX(e)
+                
+                if loc > 0:
+                    if st.button(label=USUAL_ICONS.UP.value, use_container_width=True):
+                        DB['TEST_LIST'].insert(loc-1, DB['TEST_LIST'].pop(loc))
+                        SQL_UPDATE_DB("TEMPLATES", ID, DB)
+                        st.session_state.TEMPLATES += 1
+                        st.rerun()
+                
+                if loc < len(DB['TEST_LIST'])-1:
+                    if st.button(label=USUAL_ICONS.DOWN.value, use_container_width=True):
+                        DB['TEST_LIST'].insert(loc+1, DB['TEST_LIST'].pop(loc))
+                        SQL_UPDATE_DB("TEMPLATES", ID, DB)
+                        st.session_state.TEMPLATES += 1
+                        st.rerun()
 
     if len(TBL_TEST.selection.rows) == 1:
         st.text("")
         DF_CALIBRATION = pd.DataFrame(test.CALIBRATION, columns=[field.name for field in TEMPLATE.MEASURE])
+        DF_CALIBRATION['RANGE_TX'] = DF_CALIBRATION['RANGE_TX'].astype(str)
+        DF_CALIBRATION['RANGE'] = DF_CALIBRATION['RANGE'].astype(float)
+        DF_CALIBRATION['VALUE1'] = DF_CALIBRATION['VALUE1'].astype(float)
+        DF_CALIBRATION['VALUE2'] = DF_CALIBRATION['VALUE2'].astype(float)
         DF_CALIBRATION = DF_CALIBRATION.reset_index()
         del DF_CALIBRATION['index']
         tbl_cal_test = st.data_editor(
@@ -170,7 +182,7 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
             data=DF_CALIBRATION,
             use_container_width=True,
             hide_index=True,
-            column_config={field.name: st.column_config.NumberColumn() for field in TEMPLATE.MEASURE}, 
+            # column_config={field.name: st.column_config.NumberColumn() for field in TEMPLATE.MEASURE}, 
             num_rows='dynamic'
         )
         if st.button(USUAL_ICONS.UPDATE.value + " UPDATE", key='btn_tbl_update'):

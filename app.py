@@ -14,7 +14,7 @@ pip install streamlit-authenticator
 ## PYTHON LIBRARIES
 import os, json
 from io import StringIO
-from typing import Union, Tuple
+from typing import Union, Tuple, Callable
 from dataclasses import dataclass
 from enum import Enum, auto
 
@@ -68,7 +68,7 @@ def INFOBOX(info: str):
     return st.warning(info, icon="🚨")
 
 @st.experimental_dialog(title="❓")
-def YESNOBOX(info: str, FUNCTION):
+def YESNOBOX(info: str, FUNCTION: Callable):
     st.text(info)
     col12, col22 = st.columns(2)
     with col12:
@@ -126,6 +126,7 @@ def SIDEBAR():
             st.page_link(r"pages/MODELS.py", label="MODELS") # , icon="🚗"
             st.page_link(r"pages/TEMPLATES.py", label="TEMPLATES", use_container_width=True)
             st.page_link(r"pages/CALIBRATIONS.py", label="CALIBRATIONS", use_container_width=True)
+            st.page_link(r"pages/CMC.py", label="CMC", use_container_width=True)
 
     else: 
         # if st.sidebar.button("🪪 LOGIN", use_container_width=True):

@@ -220,22 +220,13 @@ if MODEL_ID:
                             sleep(2)
                             st.rerun()
 
-            #     if CURRENT_PROCEDURE and st.button("🗑️ DELETE PROCEDURE", use_container_width=True):
-            #         @st.experimental_dialog(title="❓")
-            #         def YESNO_int(info: str):
-            #             st.text(info)
-            #             col12, col22 = st.columns(2)
-            #             with col12:
-            #                 if st.button("YES", use_container_width=True):
-            #                     st.session_state.DB_DATA['SPECIFICATIONS'].pop(CURRENT_PROCEDURE)
-            #                     # INSERT_PROCEDURE(MODEL_ID, st.session_state.DB_DATA)
-            #                     SQL_UPDATE_DB("MODELS", MODEL_ID, st.session_state.DB_DATA)
-            #                     st.rerun()
-            #             with col22:
-            #                 if st.button("NO", use_container_width=True):
-            #                     st.rerun()
-                    
-            #         YESNO_int(f"DO YOU WANT TO DELETE THIS PROCEDURE?\n< {CURRENT_PROCEDURE} >")
+                    if CURRENT_PROCEDURE and st.button("🗑️ DELETE PROCEDURE", use_container_width=True):
+                        def DELETE_PROCEDURE():
+                            st.session_state.DB_DATA['SPECIFICATIONS'].pop(CURRENT_PROCEDURE)
+                            SQL_UPDATE_DB("MODELS", MODEL_ID, st.session_state.DB_DATA)
+                            st.rerun()
+
+                        YESNOBOX(f"DO YOU WANT TO DELETE THIS PROCEDURE?\n< {CURRENT_PROCEDURE} >", DELETE_PROCEDURE)
 
         # FUNC(CURRENT_PROCEDURE)
         st.text("") # SEPARATOR
