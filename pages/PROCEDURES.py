@@ -97,6 +97,8 @@ def REPORT_FORMAT(ID: str, DB: dict) -> None:
         result_types = [result.name for result in RESULTS.TYPES]
         if not DB["REPORT_FORMAT"].get("RESULT_TYPE"): DB["REPORT_FORMAT"]["RESULT_TYPE"] = "DEVIATION"
         result_type = st.selectbox("result_type", label_visibility='collapsed', options=[result.name for result in RESULTS.TYPES], index=result_types.index(DB["REPORT_FORMAT"]["RESULT_TYPE"]))
+        if not DB["REPORT_FORMAT"].get("ABSOLUTE_VALUES"): DB["REPORT_FORMAT"]["ABSOLUTE_VALUES"] = False
+        absolute_values = st.checkbox("ABSOLUTE VALUES", value=DB["REPORT_FORMAT"]["ABSOLUTE_VALUES"])
         st.text("PARAMETERS")
         serie_parameters = st.data_editor(
             data=pd.Series(PROCEDURE.dict_parameters(**DB["REPORT_FORMAT"]['PARAMETERS']).toDict(), name="VALUE"),
@@ -115,6 +117,7 @@ def REPORT_FORMAT(ID: str, DB: dict) -> None:
         )
         if st.button(label="🔄 UPDATE"):
             DB["REPORT_FORMAT"]["RESULT_TYPE"] = result_type
+            DB["REPORT_FORMAT"]["ABSOLUTE_VALUES"] = absolute_values
             DB["REPORT_FORMAT"]["PARAMETERS"] = serie_parameters.to_dict()
             DB["REPORT_FORMAT"]["UNITS"] = serie_units.to_dict()
             try:
