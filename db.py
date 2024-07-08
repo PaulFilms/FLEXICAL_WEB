@@ -126,6 +126,12 @@ def SQL_PROCEDURES(COUNT: int) -> list:
     return SQL.data
 
 @st.cache_resource
+def SQL_TEMPLATES_VIEW(COUNT: int) -> list:
+    print(f"SQL TEMPLATES_VIEW ({COUNT}):", GET_FIRM())
+    SQL = execute_query(conn.table("TEMPLATES_VIEW").select('*').order("Id"), ttl="10m")
+    return SQL.data
+
+@st.cache_resource
 def SQL_CUSTOMERS(COUNT: int):
     print(f"SQL CUSTOMERS ({COUNT}):", GET_FIRM())
     SQL = execute_query(conn.table("CUSTOMERS").select('*').order("Id"), ttl="10m")

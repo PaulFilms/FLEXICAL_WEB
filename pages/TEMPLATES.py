@@ -1,5 +1,5 @@
 '''
-FLEXICAL v3 | ...
+FLEXICAL v3 | TEMPLATES
 
 '''
 
@@ -137,20 +137,14 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
         with st.popover(USUAL_ICONS.EXPANDER.value):
             if st.button(label='➕ ADD TEST', use_container_width=True):
                 FORM_NEW()
-    
-    # col13, col23, col33 = st.columns(3)
-
-    # with col13:
 
             if len(TBL_TEST.selection.rows) == 1:
                 loc = TBL_TEST.selection.rows[0]
                 test = TEMPLATE.TEST(**DB["TEST_LIST"][loc])
 
-                # with col23:
                 if st.button(label='✏️ EDIT TEST', use_container_width=True):
                     FORM_EDIT(test, loc)
                 
-                # with col33:
                 if st.button(label='➖ DEL TEST', use_container_width=True):
                     del DB['TEST_LIST'][loc]
                     try:
@@ -159,10 +153,28 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
                         st.rerun()
                     except Exception as e:
                         INFOBOX(e)
+                
+                if loc > 0:
+                    if st.button(label=USUAL_ICONS.UP.value, use_container_width=True):
+                        DB['TEST_LIST'].insert(loc-1, DB['TEST_LIST'].pop(loc))
+                        SQL_UPDATE_DB("TEMPLATES", ID, DB)
+                        st.session_state.TEMPLATES += 1
+                        st.rerun()
+                
+                if loc < len(DB['TEST_LIST'])-1:
+                    if st.button(label=USUAL_ICONS.DOWN.value, use_container_width=True):
+                        DB['TEST_LIST'].insert(loc+1, DB['TEST_LIST'].pop(loc))
+                        SQL_UPDATE_DB("TEMPLATES", ID, DB)
+                        st.session_state.TEMPLATES += 1
+                        st.rerun()
 
     if len(TBL_TEST.selection.rows) == 1:
         st.text("")
         DF_CALIBRATION = pd.DataFrame(test.CALIBRATION, columns=[field.name for field in TEMPLATE.MEASURE])
+        DF_CALIBRATION['RANGE_TX'] = DF_CALIBRATION['RANGE_TX'].astype(str)
+        DF_CALIBRATION['RANGE'] = DF_CALIBRATION['RANGE'].astype(float)
+        DF_CALIBRATION['VALUE1'] = DF_CALIBRATION['VALUE1'].astype(float)
+        DF_CALIBRATION['VALUE2'] = DF_CALIBRATION['VALUE2'].astype(float)
         DF_CALIBRATION = DF_CALIBRATION.reset_index()
         del DF_CALIBRATION['index']
         tbl_cal_test = st.data_editor(
@@ -170,7 +182,9 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
             data=DF_CALIBRATION,
             use_container_width=True,
             hide_index=True,
-            column_config={field.name: st.column_config.NumberColumn() for field in TEMPLATE.MEASURE}, 
+            column_config={
+                'RANGE_TX': st.column_config.TextColumn(default=""),
+            }, 
             num_rows='dynamic'
         )
         if st.button(USUAL_ICONS.UPDATE.value + " UPDATE", key='btn_tbl_update'):
@@ -544,7 +558,11 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
                     print(e)
                 # CMC_DICT = json.loads(PROCEDURE_DB)['CMC']
                 CMC_DF = pd.DataFrame(PROCEDURE_DB['CMC'])
-                SPECIFICATION_DF = pd.DataFrame(SPECIFICATION_DICT[PROCEDURE_ID]) #, columns=['RANGE1_MIN', 'RANGE1_MAX','RANGE2_MIN','RANGE2_MAX','RESOLUTION','C1','C2','C3','EVALUATION',])
+                if PROCEDURE_ID  in SPECIFICATION_DICT:
+                    SPECIFICATION_DF = pd.DataFrame(SPECIFICATION_DICT[PROCEDURE_ID]) #, columns=['RANGE1_MIN', 'RANGE1_MAX','RANGE2_MIN','RANGE2_MAX','RESOLUTION','C1','C2','C3','EVALUATION',])
+                else:
+                    SPECIFICATION_DF = None
+                    st.toast(f"SPECIFICATION <{PROCEDURE_ID}> IS EMPTY")
                 # print(SPECIFICATION_DF)
 
                 ## TEST TITLE
@@ -573,15 +591,24 @@ TEXT(ROUND({XLS.CELL(ROW, HEADERS_NOVISIBLE.DEVIATION.value)},-INT(RIGHT(TEXT({X
                 CALIBRATION_DF = pd.DataFrame(current_test.CALIBRATION)
                 for loc in CALIBRATION_DF.index:
                     ROW_DATA = dict(CALIBRATION_DF.loc[loc])
-                    RESOLUTION = TABLE_DATA.FILTER_VALUE(SPECIFICATION_DF, 'RESOLUTION', ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                    if MODULE.get("SPECIFICATION"):
-                        SPECIFICATION = MODULE['SPECIFICATION'](SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                    else:
+                    ## SPECIFICATION
+                    if isinstance(SPECIFICATION_DF, pd.DataFrame):
+                        # RESOLUTION = TABLE_DATA.FILTER_VALUE(SPECIFICATION_DF, 'RESOLUTION', ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                        RESOLUTION = SPECIFICATION_DF[SPECIFICATION_DF['RANGE1_MAX']==ROW_DATA['RANGE']]['RESOLUTION'].max()
+                    # if MODULE.get("SPECIFICATION"):
+                    #     SPECIFICATION = MODULE['SPECIFICATION'](SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                    # else:
                         SPECIFICATION = TABLE_DATA.GET_VALUE(SPECIFICATION_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
-                    if MODULE.get("CMC"):
-                        CMC = MODULE['CMC'](CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
                     else:
-                        CMC = TABLE_DATA.GET_VALUE(CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                        RESOLUTION = None
+                        SPECIFICATION = None
+                    ## CMC
+                    # if MODULE.get("CMC"):
+                    #     CMC = MODULE['CMC'](CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'])
+                    # else:
+                    if PROCEDURE_DB['REPORT_FORMAT'].get('ABSOLUTE_VALUES'): ABS = PROCEDURE_DB['REPORT_FORMAT']['ABSOLUTE_VALUES']
+                    else: ABS = False
+                    CMC = TABLE_DATA.GET_VALUE(CMC_DF, ROW_DATA['VALUE1'], ROW_DATA['VALUE2'], ABS=ABS)
 
                     ## REPORT
                     REPORT.WR(REPORT.ROW, 3, EXCEL_FORMULA_DIGITS(REPORT.ROW))
@@ -671,16 +698,39 @@ SIDEBAR()
 
 st.text('TEMPLATE Id')
 
+SQL = SQL_TEMPLATES_VIEW(st.session_state.TEMPLATES)
+DATAFRAME = pd.DataFrame(SQL)
+
+FLTR_DEVICE: str = None
+FLTR_MANUFACTURER: str = None
+FLTR_ID: str = None
+
+def get_filter() -> pd.DataFrame:
+    df_filtered = DATAFRAME.copy()
+    # for filter in [FLTR_DEVICE, FLTR_MANUFACTURER, FLTR_ID]:
+    #     if filter == None or 
+    if FLTR_DEVICE:
+        df_filtered = df_filtered[df_filtered['DEVICE_TYPE']==FLTR_DEVICE]
+    if FLTR_MANUFACTURER:
+        df_filtered = df_filtered[df_filtered['MANUFACTURER']==FLTR_MANUFACTURER]
+    if FLTR_ID:
+        df_filtered = df_filtered[df_filtered['Id']==FLTR_ID]
+    return df_filtered
+
 col12, col22 = st.columns(2)
 
 with col12:
-    TEMPLATE_ID = st.selectbox("TEMPLATE Id", options=SQL_SELECT_COLUMN("TEMPLATES", "Id"), index=None, label_visibility='collapsed')
+    holder_template = st.empty()
+    TEMPLATE_ID = holder_template.selectbox("TEMPLATE Id", options=DATAFRAME['Id'].to_list(), index=None, label_visibility='collapsed')
 
 with col22:
     with st.popover(USUAL_ICONS.EXPANDER.value):
-        FLTR_DEVICE = st.selectbox("DEVICE TYPE", options=SQL_SELECT_COLUMN("DEVICE_TYPES", "Id"), index=None)
-        FLTR_MANUFACTURER = st.selectbox("MANUFACTURER", options=SQL_SELECT_COLUMN("MANUFACTURERS", "Id"), index=None)
-        FLTR_MODEL = st.selectbox("MODEL", options=SQL_SELECT_COLUMN("MODELS", "Id"), index=None)
+        FLTR_DEVICE = st.selectbox("DEVICE TYPE", options=get_filter()['DEVICE_TYPE'].unique().tolist(), index=None)
+        FLTR_MANUFACTURER = st.selectbox("MANUFACTURER", options=get_filter()['MANUFACTURER'].unique().tolist(), index=None)
+        FLTR_ID = st.selectbox("Id", options=get_filter()['Id'].unique().tolist(), index=None)
+
+        if FLTR_ID:
+            TEMPLATE_ID = holder_template.selectbox("TEMPLATE Id", options=DATAFRAME['Id'].to_list(), index=DATAFRAME['Id'].to_list().index(FLTR_ID), label_visibility='collapsed')
 
 if TEMPLATE_ID:
     SQL = SQL_BY_ROW("TEMPLATES", "Id", TEMPLATE_ID)
