@@ -136,7 +136,7 @@ class XLSREPORT:
         ## PATH
         self.filePath = path
         extension = os.path.splitext(path)[1]
-        if extension == str() or extension == None:
+        if extension == str() or extension == None or extension != ".xlsx":
             self.filePath += ".xlsx"
 
         ## INIT
