@@ -20,6 +20,9 @@ from db import *
 if 'LOGIN_STATUS' not in st.session_state:
     st.session_state.LOGIN_STATUS = None
 
+if not 'PROCEDURES' in st.session_state:
+    st.session_state.PROCEDURES = 1
+
 
 ## MENU
 ## __________________________________________________________________________________________________
@@ -78,7 +81,7 @@ if SERIE_ID:
 
     # st.text("")
     # st.text("")
-    st.subheader('MODELS:', divider='blue')
+    st.subheader('STANDARD MODELS:', divider='blue')
     # st.markdown(''':blue-background[💊 MODELS:]''')
 
     if not CURRENT_DB.get('MODELS'):
@@ -139,6 +142,8 @@ if SERIE_ID:
     st.subheader('PROCEDURES:', divider='blue')
     # st.markdown(''':blue-background[💊 PROCEDURES:]''')
 
+    PROCEDURES = [proc['Id'] for proc in SQL_PROCEDURES(st.session_state.PROCEDURES)]
+
     col12, col22 = st.columns(2)
 
     if not CURRENT_DB.get('PROCEDURES'):
@@ -160,10 +165,7 @@ if SERIE_ID:
 
     with col22:
         with st.popover(label=chr(8801)):
-            PROCEDURES = [proc['Id'] for proc in SQL_PROCEDURES(st.session_state.PROCEDURES)]
             with st.container(border=True):
-                if 'PROCEDURES' not in st.session_state:
-                    st.session_state.PROCEDURES = 1
                 procedure_Id = st.selectbox("PROCEDURE Id", options=PROCEDURES)
                 if st.button(label='➕ INSERT PROCEDURE', use_container_width=True):
                     if procedure_Id in list(CURRENT_DB['PROCEDURES'].keys()):
