@@ -225,7 +225,7 @@ class XLSREPORT:
         '''
         for column_cells in self.WS.columns:
                 new_column_length = max(len(str(cell.value)) for cell in column_cells)
-                new_column_letter = (xls.utils.get_column_letter(column_cells[0].column))
+                new_column_letter = (get_column_letter(column_cells[0].column))
                 if new_column_length > 0:
                     self.WS.column_dimensions[new_column_letter].width = new_column_length*1.23
 
