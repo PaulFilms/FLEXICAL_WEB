@@ -42,6 +42,7 @@ st.text('MODEL SERIES Id')
 col12, col22 = st.columns(2)
 
 SQL = execute_query(conn.table("CMC").select('*').order('Id')).data
+print("SQL:\n", SQL)
 
 with col12:
     SERIE_ID = st.selectbox("SERIE Id", options=[id_serie['Id'] for id_serie in SQL], index=None, label_visibility='collapsed')
