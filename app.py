@@ -41,7 +41,7 @@ from db import SQL_UPDATE_ID, SQL_UPDATE_DB
 
 path_resources = r"resources"
 
-class USUAL_ICONS(Enum): # 🪪🧮
+class USUAL_ICONS(Enum): # 🪪 🧮
     HOME = "🏠"
     EXIT = "⛔"
     SAVE = "💾"
@@ -53,7 +53,7 @@ class USUAL_ICONS(Enum): # 🪪🧮
     UP = "🔼"
     DOWN = "🔽"
     QUESTION = "❓"
-    EXPANDER = chr(8801)
+    EXPANDER = chr(8801) # ≡
     LOCK = "🔒"
     LOGIN = "🪪"
     PRINT = "🖨️"

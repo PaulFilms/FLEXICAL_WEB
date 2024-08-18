@@ -68,4 +68,3 @@ with col23:
         if st.session_state.LOGIN_STATUS:
             sleep(3)
             st.switch_page(r"pages/HOME.py")
-    

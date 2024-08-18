@@ -282,7 +282,7 @@ if st.session_state.TABLE and st.session_state.LOGIN_STATUS:
 
     st.text("") # SEPARATOR
     st.text("") # SEPARATOR
-    st.subheader('DATABASE:', divider='blue')
+    st.subheader('DATA:', divider='blue')
 
     # st.sidebar.markdown("""
     # [➡️ DATABASE](#database)
