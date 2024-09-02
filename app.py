@@ -57,6 +57,7 @@ class USUAL_ICONS(Enum): # 🪪 🧮
     LOCK = "🔒"
     LOGIN = "🪪"
     PRINT = "🖨️"
+    SURE = "🤔"
 
 def FOOTER(TEXT: str):
     footer = """<style>.footer {position: fixed;left: 330;bottom: 0;width: 100%;background-color: #000;color: white;text-align: left;}</style><div class='footer'><p>"""
