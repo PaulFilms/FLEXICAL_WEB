@@ -25,7 +25,7 @@ from st_supabase_connection import SupabaseConnection, execute_query
 ## DB CONNECTION
 ## __________________________________________________________________________________________________
 
-conn = st.connection("supabase", type=SupabaseConnection)
+conn = st.connection("supabase", type=SupabaseConnection, ttl=None)
 
 
 
