@@ -303,7 +303,7 @@ if st.session_state.TABLE and st.session_state.LOGIN_STATUS:
         column_config={colum: st.column_config.TextColumn(label=colum, width=None) for colum in list(DATAFRAME.columns)}
     )
 
-    with st.popover(USUAL_ICONS.EXPANDER.value, help="TABLE OPTIONS"):
+    with st.popover(":material/thumb_up:", help="TABLE OPTIONS"):
         st.text("EXPORT TO .xlsx")
         st.text("EXPORT TO .pdf")
 
