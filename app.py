@@ -67,7 +67,7 @@ def logout():
 
 ## PAGES
 page_logout = st.Page(logout, title="Log out", icon=":material/logout:")
-page_settings = st.Page("settings.py", title="Settings", icon=":material/settings:")
+page_settings = st.Page(r"navigation/settings.py", title="Settings", icon=":material/settings:")
 
 page_database = st.Page(
     r"navigation/database.py",
