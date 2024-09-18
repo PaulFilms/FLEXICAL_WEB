@@ -1,12 +1,6 @@
 import os
 import streamlit as st
 
-
-# from st_supabase_connection import SupabaseConnection, execute_query
-# conn = st.connection("supabase", type=SupabaseConnection, ttl=None)
-
-from menus import *
-
 st.set_page_config(
     page_title="FLEXICAL WEBAPP",
     page_icon='🎛️',
@@ -14,58 +8,19 @@ st.set_page_config(
     initial_sidebar_state= "auto" # "collapsed"
 )
 
+from menus import *
+from db import *
+
 if "role" not in st.session_state:
     st.session_state.role = None
-
-def login():
-    st.header("Log in")
-    role = st.selectbox("Choose your role", ROLES.list())
-    if st.button("Log in"):
-        st.session_state.role = ROLES[role]
-        st.rerun()
-
-# def login():
-
-#     col13, col23, col33 = st.columns([1,1,1])
-
-#     with col23:
-#         st.image(os.path.join(path_resources, r"LOGO2.svg"), use_column_width=False) # flexical_developer
-#         st.session_state.role = None
-#         USERNAME = st.text_input("USER NAME OR MAIL *")
-#         PASSWORD = st.text_input("PASSWORD *", type='password')
-#         st.text("") # SEPARATOR
-#         BTN = st.button(label="🪪 LOG IN", use_container_width=True)
-#         # st.page_link(page='app.py', label="Forgot your password?")
-
-#         if BTN:
-#             st.session_state.role = ROLES.ADMIN
-#             # if not USERNAME or USERNAME == str():
-#             #     INFOBOX("PLEASE pon el nombre bro")
-#             # else:
-#             #     if "@" in USERNAME:
-#             #         SQL = SQL_BY_ROW("USERS", "MAIL", USERNAME)
-#             #     else:
-#             #         SQL = SQL_BY_ROW("USERS", "Id", USERNAME.upper())
-#             #     if len(SQL) == 1:
-#             #         USER = SQL[0]["Id"]
-#             #         st.session_state.LOGIN_STATUS = USER
-#             #     else:
-#             #         INFOBOX("INVALID USER/MAIL")
-            
-#             ## PASSWORD CHECK
-#             # if PASSWORD == None or PASSWORD == str():
-#                 # INFOBOX(PASSWORD)
-
-#             ## LOGIN
-#             # if st.session_state.LOGIN_STATUS:
-#             #     sleep(3)
-#             #     st.switch_page(r"pages/HOME.py")
 
 def logout():
     st.session_state.role = None
     st.rerun()
 
 ## PAGES
+page_home = st.Page(r'navigation/home.py', title="Home", icon=":material/home:", default=(not st.session_state.role))
+page_login = st.Page(r'navigation/login.py', title="Log in", icon=":material/login:")
 page_logout = st.Page(logout, title="Log out", icon=":material/logout:")
 page_settings = st.Page(r"navigation/settings.py", title="Settings", icon=":material/settings:")
 
@@ -111,6 +66,8 @@ pages_admin = [page_procedures, page_scopes, page_templates]
 ## NAVIGATION
 pages_dict = {}
 
+# if not st.session_state.role:
+
 if st.session_state.role in [ROLES.TECHNICIAN, ROLES.ADMIN]:
     pages_dict[ROLES.TECHNICIAN.name] = pages_technician
 
@@ -120,6 +77,7 @@ if st.session_state.role == ROLES.ADMIN:
 if len(pages_dict) > 0:
     pg = st.navigation({"Account": pages_account} | pages_dict)
 else:
-    pg = st.navigation([st.Page(login)])
+    # pg = st.navigation([st.Page(login)])
+    pg = st.navigation([page_home, page_login])
 
 pg.run()

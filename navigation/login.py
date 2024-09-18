@@ -2,7 +2,7 @@ import os
 import streamlit as st
 from menus import *
 
-if 'role' not in st.session_state.role:
+if 'role' not in st.session_state:
     st.session_state.role = None
 
 col13, col23, col33 = st.columns([1,1,1])
@@ -19,16 +19,18 @@ with col23:
     if BTN:
         if not USERNAME or USERNAME == str():
             INFOBOX("PLEASE pon el nombre bro")
-        # else:
-        #     if "@" in USERNAME:
-        #         SQL = SQL_BY_ROW("USERS", "MAIL", USERNAME)
-        #     else:
-        #         SQL = SQL_BY_ROW("USERS", "Id", USERNAME.upper())
-        #     if len(SQL) == 1:
-        #         USER = SQL[0]["Id"]
-        #         st.session_state.LOGIN_STATUS = USER
-        #     else:
-        #         INFOBOX("INVALID USER/MAIL")
+        else:
+            if "@" in USERNAME:
+                SQL = sql_row("USERS", "MAIL", USERNAME)
+            else:
+                SQL = sql_row("USERS", "Id", USERNAME.upper())
+            if len(SQL) == 1:
+                USER = SQL[0]["Id"]
+                # st.session_state.LOGIN_STATUS = USER
+                st.session_state.role = ROLES.ADMIN
+                st.rerun()
+            else:
+                INFOBOX("INVALID USER/MAIL")
         
         ## PASSWORD CHECK
         # if PASSWORD == None or PASSWORD == str():

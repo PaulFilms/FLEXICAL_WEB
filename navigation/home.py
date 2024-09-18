@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from app import *
+from menus import *
 
 
 # if 'LOGIN_STATUS' not in st.session_state:
@@ -25,11 +25,11 @@ col12, col22 = st.columns(2)
 
 with col12:
     st.write(":blue-background[📒 PAGES]")
-    with st.container(border=False):
-        st.page_link(r"pages/DATABASE.py", label="DATABASE", use_container_width=True) # icon="🧬", 
-        with st.expander(USUAL_ICONS.EXPANDER.value + "  EDITORS", expanded=False):
-            st.page_link(r"pages/MODELS.py", label="MODELS", icon="🚗", use_container_width=True)
-            st.page_link(r"pages/PROCEDURES.py", label="PROCEDURES", icon="🧬", use_container_width=True)
+    # with st.container(border=False):
+    #     st.page_link(r"pages/DATABASE.py", label="DATABASE", use_container_width=True) # icon="🧬", 
+    #     with st.expander(USUAL_ICONS.EXPANDER.value + "  EDITORS", expanded=False):
+    #         st.page_link(r"pages/MODELS.py", label="MODELS", icon="🚗", use_container_width=True)
+    #         st.page_link(r"pages/PROCEDURES.py", label="PROCEDURES", icon="🧬", use_container_width=True)
 
 with col22:
     st.write(":blue-background[🧷 DOCUMENTATION]")
