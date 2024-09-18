@@ -3,12 +3,13 @@ import streamlit as st
 from menus import *
 
 
-# if 'LOGIN_STATUS' not in st.session_state:
-#     st.session_state.LOGIN_STATUS = None
+if 'role' not in st.session_state:
+    st.session_state.role = None
 
 
 # SIDEBAR()
-# st.image(os.path.join(path_resources, r"LOGO2.svg"), use_column_width=False) # flexical_developer
+
+st.image(os.path.join(path_resources, r"LOGO2.svg"), use_column_width=False) # flexical_developer
 
 st.text("ABOUT FLEXICAL")
 with st.container(border=True):

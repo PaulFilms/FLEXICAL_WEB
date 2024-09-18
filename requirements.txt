@@ -3,3 +3,4 @@ st-supabase-connection
 matplotlib
 openpyxl
 pycalibration @ git+https://github.com/PaulFilms/pycalibration.git@main
+flexical @ git+https://github.com/PaulFilms/Flexical@main

@@ -18,6 +18,8 @@ def logout():
     st.session_state.role = None
     st.rerun()
 
+st.logo(os.path.join(path_resources, r"LOGO2.svg"))
+
 ## PAGES
 page_home = st.Page(r'navigation/home.py', title="Home", icon=":material/home:", default=(not st.session_state.role))
 page_login = st.Page(r'navigation/login.py', title="Log in", icon=":material/login:")
@@ -66,7 +68,7 @@ pages_admin = [page_procedures, page_scopes, page_templates]
 ## NAVIGATION
 pages_dict = {}
 
-# if not st.session_state.role:
+st.session_state.role = ROLES.ADMIN
 
 if st.session_state.role in [ROLES.TECHNICIAN, ROLES.ADMIN]:
     pages_dict[ROLES.TECHNICIAN.name] = pages_technician
@@ -75,7 +77,7 @@ if st.session_state.role == ROLES.ADMIN:
     pages_dict[ROLES.ADMIN.name] = pages_admin
 
 if len(pages_dict) > 0:
-    pg = st.navigation({"Account": pages_account} | pages_dict)
+    pg = st.navigation({'': [page_home], "Account": pages_account} | pages_dict)
 else:
     # pg = st.navigation([st.Page(login)])
     pg = st.navigation([page_home, page_login])

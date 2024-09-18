@@ -8,6 +8,7 @@ from typing import TypedDict
 import pandas as pd
 
 from pycalibration.calibration import CALIBRATION
+from flexical.database import views
 
 class TEMPLATE:
 
@@ -24,6 +25,12 @@ class TEMPLATE:
         RANGE = auto()
         VALUE1 = auto()
         VALUE2 = auto()
+
+if 'role' not in st.session_state:
+    st.session_state.role = None
+
+if 'filter' not in st.session_state:
+    st.session_state.filter = None
 
 if 'TEMPLATES' not in st.session_state:
     st.session_state.TEMPLATES = 1
@@ -160,38 +167,70 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
             except Exception as e:
                 INFOBOX(e)
 
-def get_filter() -> pd.DataFrame:
-    df_filtered = DATAFRAME.copy()
-    # for filter in [FLTR_DEVICE, FLTR_MANUFACTURER, FLTR_ID]:
-    #     if filter == None or 
-    # if FLTR_DEVICE:
-    #     df_filtered = df_filtered[df_filtered['DEVICE_TYPE']==FLTR_DEVICE]
-    # if FLTR_MANUFACTURER:
-    #     df_filtered = df_filtered[df_filtered['MANUFACTURER']==FLTR_MANUFACTURER]
-    if FLTR_ID:
-        df_filtered = df_filtered[df_filtered['Id']==FLTR_ID]
-    return df_filtered
+# def get_filter() -> pd.DataFrame:
+#     df_filtered = DATAFRAME.copy()
+#     # for filter in [FLTR_DEVICE, FLTR_MANUFACTURER, FLTR_ID]:
+#     #     if filter == None or 
+#     # if FLTR_DEVICE:
+#     #     df_filtered = df_filtered[df_filtered['DEVICE_TYPE']==FLTR_DEVICE]
+#     # if FLTR_MANUFACTURER:
+#     #     df_filtered = df_filtered[df_filtered['MANUFACTURER']==FLTR_MANUFACTURER]
+#     if FLTR_ID:
+#         df_filtered = df_filtered[df_filtered['Id']==FLTR_ID]
+#     return df_filtered
+
+@st.cache_resource
+def sql_templates_filter(count: int):
+    data = (
+        supabase.table('TEMPLATES_VIEW')
+        .select(
+            views.TEMPLATES_VIEW.Id.name,
+            views.TEMPLATES_VIEW.DEVICE_TYPE.name,
+            views.TEMPLATES_VIEW.MANUFACTURER.name,
+            views.TEMPLATES_VIEW.MODEL.name,
+        )
+        .order('Id')
+        .execute().data
+    )
+    return data
+
+@st.dialog('FILTERS', width='small')
+def FILTERS(dataFrame: pd.DataFrame):
+    FLTR_DEVICE: str = None
+    FLTR_MANUFACTURER: str = None
+    FLTR_MODEL: str = None
+    FLTR_ID: str = None
+    
+    def get_filter():
+        df_filtered = DATAFRAME.copy()
+        if FLTR_DEVICE: 
+            df_filtered = df_filtered[df_filtered['DEVICE_TYPE']==FLTR_DEVICE]
+        if FLTR_MANUFACTURER: 
+            df_filtered = df_filtered[df_filtered['MANUFACTURER']==FLTR_MANUFACTURER]
+        if FLTR_MODEL: 
+            df_filtered = df_filtered[df_filtered['MODEL']==FLTR_MODEL]
+        if FLTR_ID: 
+            df_filtered = df_filtered[df_filtered['Id']==FLTR_ID]
+
+        return df_filtered
+
+    FLTR_DEVICE = st.selectbox("DEVICE TYPE", options=get_filter()['DEVICE_TYPE'].unique().tolist(), index=None)
+    FLTR_MANUFACTURER = st.selectbox("MANUFACTURER", options=get_filter()['MANUFACTURER'].unique().tolist(), index=None)
+    FLTR_MODEL = st.selectbox("MODEL", options=get_filter()['MODEL'].unique().tolist(), index=None)
+    FLTR_ID = st.selectbox("Id", options=get_filter()['Id'].unique().tolist(), index=None)
+
+    st.text('')
+    st.text('')
+    if st.button('SUBMIT', use_container_width=True):
+        st.session_state.filter = FLTR_ID
+        st.rerun()
+
+
 
 ## PAGE
 ## __________________________________________________________________________________________________
 
-SQL = sql_table('TEMPLATES', st.session_state.TEMPLATES)
-DATAFRAME = pd.DataFrame(SQL)
-
-with st.expander('FILTERS'): # , use_container_width=True
-    # FsNUFACTURER = st.selectbox("MANUFACTURER", options=DATAFRAME['MANUFACTURER'].unique().tolist(), index=None)
-    # FLTR_ID = st.selectbox("Id", options=DATAFRAME['Id'].unique().tolist(), index=None)
-
-    # if FLTR_ID:
-    #     TEMPLATE_ID = ho
-    col13, col23, col33 = st.columns(3)
-    with col13:
-        st.button('TYPE DEVICE', use_container_width=True)
-    with col23:
-        st.button('MANUFACTURER', use_container_width=True)
-    with col33:
-        st.button('MODEL', use_container_width=True)
-
+DATAFRAME = pd.DataFrame(sql_templates_filter(st.session_state.TEMPLATES))
 
 col12, col22 = st.columns(2)
 
@@ -199,12 +238,23 @@ with col12:
     holder_template = st.empty()
     TEMPLATE_ID = holder_template.selectbox("TEMPLATE Id", options=DATAFRAME['Id'].to_list(), index=None, label_visibility='collapsed')
 
+with col22:
+    btn_filters = st.button(':material/filter: FILTERS')
+
+if btn_filters:
+    FILTERS(DATAFRAME)
+
+if st.session_state.filter:
+    TEMPLATE_ID = holder_template.selectbox("TEMPLATE Id", options=DATAFRAME['Id'].to_list(), index=DATAFRAME['Id'].to_list().index(st.session_state.filter), label_visibility='collapsed')
+    st.session_state.filter = None
+
 if TEMPLATE_ID:
-    # CURRENT_TEMPLATE = TEMPLATE.TypeDict(**SQL[0])
-    CURRENT_TEMPLATE = DATAFRAME[DATAFRAME['Id']==TEMPLATE_ID].iloc[0]
-    CURRENT_TEMPLATE = TEMPLATE.TypeDict(**dict(CURRENT_TEMPLATE))
+    SQL = sql_row('TEMPLATES', 'Id', TEMPLATE_ID)
+    # st.write(SQL)
+    CURRENT_TEMPLATE = TEMPLATE.TypeDict(**SQL[0])
+    # CURRENT_TEMPLATE = DATAFRAME[DATAFRAME['Id']==TEMPLATE_ID].iloc[0]
+    # CURRENT_TEMPLATE = TEMPLATE.TypeDict(**dict(CURRENT_TEMPLATE))
     # st.write(CURRENT_TEMPLATE)
-    # st.write(type(CURRENT_TEMPLATE))
     # st.write(CURRENT_TEMPLATE['Id'])
 
     ## DB DATA
@@ -226,8 +276,8 @@ if TEMPLATE_ID:
 
     # st.json(CURRENT_TEMPLATE["DB"])
 
-    # JSON = json.loads(CURRENT_TEMPLATE['DB'])
-    # st.json(JSON)
+#     # JSON = json.loads(CURRENT_TEMPLATE['DB'])
+#     # st.json(JSON)
 
 
 
