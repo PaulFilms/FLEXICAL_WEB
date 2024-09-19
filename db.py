@@ -50,11 +50,11 @@ def sql_table(table: str, count: int):
     return supabase.table(table).select('*').order("Id").execute().data
 
 @st.cache_resource
-def sql_row(table: str, field: str, eq: int):
+def sql_row(table: str, field: str, eq: int, count: int):
     return supabase.table(table).select('*').eq(field, eq).execute().data
 
-# @st.cache_resource
-def sql_column(table: str, field: str) -> list:
+@st.cache_resource
+def sql_column(table: str, field: str, count: int) -> list:
     SQL = supabase.table(table).select(field).order(field).execute().data
     return [data[field] for data in SQL]
 
@@ -67,7 +67,6 @@ def sql_update_id(table: str, id: any, fields: dict[str, any]):
         .eq("Id", id)
         .execute()
     )
-    # supabase.table(table).update(update_dict).eq("Id", id).execute()
     if table not in st.session_state:
         st.session_state[table] = 1
     st.session_state[table] += 1
@@ -84,5 +83,7 @@ def sql_update_db(TABLE: str, ID, DB: dict):
         st.session_state[TABLE] = 1
     st.session_state[TABLE] += 1
     return response
+
+
 
 ## _________________________________________________________________________________________________________________

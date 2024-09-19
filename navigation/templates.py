@@ -6,6 +6,7 @@ import os, json
 from enum import Enum, auto
 from typing import TypedDict
 import pandas as pd
+import numpy as np
 
 from pycalibration.calibration import CALIBRATION
 from flexical.database import views
@@ -45,14 +46,14 @@ if 'TEMPLATES' not in st.session_state:
 ## __________________________________________________________________________________________________
 
 def TEST_EDITOR(ID: str, DB: dict) -> None:
-    procedures = sql_column("PROCEDURES", "Id")
+    procedures = sql_column("PROCEDURES", "Id", st.session_state.TEMPLATES)
 
     @st.dialog(title='✏️ EDITOR', width='small')
     def FORM_NEW():
         PROCEDURE_ID = st.selectbox("PROCEDURE Id *", options=procedures, index=None)
         title = str()
         if PROCEDURE_ID:
-            title = sql_row("PROCEDURES", "Id", PROCEDURE_ID)[0]['TITLE']
+            title = sql_row("PROCEDURES", "Id", PROCEDURE_ID, st.session_state.TEMPLATES)[0]['TITLE']
         TEST = st.text_input("TEST TITLE *", value=title)
         PARAMETERS = st.text_input("TEST PARAMETERS")
         CONFIG = st.text_input("CONFIG & CONNECTIONS")
@@ -159,6 +160,7 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
             num_rows='dynamic'
         )
         if st.button(USUAL_ICONS.UPDATE.value + " UPDATE", key='btn_tbl_update'):
+            tbl_cal_test['RANGE_TX'] = tbl_cal_test['RANGE_TX'].replace({False: str(), np.nan: str()})
             DB["TEST_LIST"][loc]['CALIBRATION'] = tbl_cal_test.to_dict()
             try:
                 sql_update_db("TEMPLATES", ID, DB)
@@ -166,18 +168,6 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
                 st.rerun()
             except Exception as e:
                 INFOBOX(e)
-
-# def get_filter() -> pd.DataFrame:
-#     df_filtered = DATAFRAME.copy()
-#     # for filter in [FLTR_DEVICE, FLTR_MANUFACTURER, FLTR_ID]:
-#     #     if filter == None or 
-#     # if FLTR_DEVICE:
-#     #     df_filtered = df_filtered[df_filtered['DEVICE_TYPE']==FLTR_DEVICE]
-#     # if FLTR_MANUFACTURER:
-#     #     df_filtered = df_filtered[df_filtered['MANUFACTURER']==FLTR_MANUFACTURER]
-#     if FLTR_ID:
-#         df_filtered = df_filtered[df_filtered['Id']==FLTR_ID]
-#     return df_filtered
 
 @st.cache_resource
 def sql_templates_filter(count: int):
@@ -222,8 +212,11 @@ def FILTERS(dataFrame: pd.DataFrame):
     st.text('')
     st.text('')
     if st.button('SUBMIT', use_container_width=True):
-        st.session_state.filter = FLTR_ID
-        st.rerun()
+        if not FLTR_ID or FLTR_ID == str():
+            INFOBOX("PLEASE, SELECT A VALID TEMPLATE Id")
+        else:
+            st.session_state.filter = FLTR_ID
+            st.rerun()
 
 
 
@@ -231,6 +224,8 @@ def FILTERS(dataFrame: pd.DataFrame):
 ## __________________________________________________________________________________________________
 
 DATAFRAME = pd.DataFrame(sql_templates_filter(st.session_state.TEMPLATES))
+
+st.text('SELECT TEMPLATE Id:')
 
 col12, col22 = st.columns(2)
 
@@ -248,8 +243,9 @@ if st.session_state.filter:
     TEMPLATE_ID = holder_template.selectbox("TEMPLATE Id", options=DATAFRAME['Id'].to_list(), index=DATAFRAME['Id'].to_list().index(st.session_state.filter), label_visibility='collapsed')
     st.session_state.filter = None
 
+
 if TEMPLATE_ID:
-    SQL = sql_row('TEMPLATES', 'Id', TEMPLATE_ID)
+    SQL = sql_row('TEMPLATES', 'Id', TEMPLATE_ID, st.session_state.TEMPLATES)
     # st.write(SQL)
     CURRENT_TEMPLATE = TEMPLATE.TypeDict(**SQL[0])
     # CURRENT_TEMPLATE = DATAFRAME[DATAFRAME['Id']==TEMPLATE_ID].iloc[0]
@@ -279,29 +275,65 @@ if TEMPLATE_ID:
 #     # JSON = json.loads(CURRENT_TEMPLATE['DB'])
 #     # st.json(JSON)
 
-
+    st.text('')
+    tab_info, tab_testlist, tab_pydata = st.tabs([':material/info: INFO', ':material/lists: TEST', ':material/developer_mode: PYDATA'])
 
     ## INFO
     ## __________________________________________________________________________________________________
 
-    st.text("") # SEPARATOR
-    # st.markdown(''':blue-background[💊 CMC:]''')
-    st.subheader('INFO:', divider='blue')
+    with tab_info:
 
-    MD_EDITOR("TEMPLATES", TEMPLATE_ID, CURRENT_TEMPLATE["INFO"])
+        # st.text("") # SEPARATOR
+        # # st.markdown(''':blue-background[💊 CMC:]''')
+        # st.subheader('INFO:', divider='blue')
+
+        MD_EDITOR("TEMPLATES", TEMPLATE_ID, CURRENT_TEMPLATE["INFO"])
 
 
 
     ## TEST LIST
     ## __________________________________________________________________________________________________
 
-    st.text("") # SEPARATOR
-    # st.markdown(''':blue-background[💊 CMC:]''')
-    st.subheader('TEST LIST:', divider='blue')
+    with tab_testlist:
 
-    if not CURRENT_DB.get("TEST_LIST"):
-        CURRENT_DB["TEST_LIST"] = []
+        # st.text("") # SEPARATOR
+        # # st.markdown(''':blue-background[💊 CMC:]''')
+        # st.subheader('TEST LIST:', divider='blue')
 
-    # st.write(CURRENT_DB["TEST_LIST"])
-    selected = TEST_EDITOR(TEMPLATE_ID, CURRENT_DB)
-    # st.write(selected)
+        if not CURRENT_DB.get("TEST_LIST"):
+            CURRENT_DB["TEST_LIST"] = []
+
+        # st.write(CURRENT_DB["TEST_LIST"])
+        selected = TEST_EDITOR(TEMPLATE_ID, CURRENT_DB)
+        # st.write(selected)
+
+
+    ## PYDATA
+    ## __________________________________________________________________________________________________
+
+    with tab_pydata:
+
+        # st.text("")
+        # st.text("")
+        # st.subheader('PYDATA:', divider='blue')
+
+        # st.sidebar.markdown("""
+        # [➡️ PYDATA](#pydata)
+        # """, unsafe_allow_html=True)
+
+        if not CURRENT_TEMPLATE["PYDATA"]:
+            CURRENT_TEMPLATE["PYDATA"] = str()
+        
+        PYDATA_EDITOR("TEMPLATES", TEMPLATE_ID, CURRENT_TEMPLATE["PYDATA"])
+
+
+    ## DB DATA JSON
+    ## __________________________________________________________________________________________________
+
+    # st.text("") # SEPARATOR
+    # st.text("") # SEPARATOR
+    # # st.markdown(''':blue-background[💊 DB DATA:]''')
+    # st.subheader('JSON DB DATA:', divider='blue')
+    
+    # DB_EDITOR("TEMPLATES", TEMPLATE_ID, CURRENT_TEMPLATE["DB"])
+

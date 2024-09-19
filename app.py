@@ -43,20 +43,20 @@ page_calibrations = st.Page(
 page_procedures = st.Page(
     r'navigation/procedures.py',
     title='PROCEDURES',
-    icon='📈',
+    icon=':material/procedure:',
     default=(st.session_state.role == ROLES.ADMIN)
 )
 
 page_scopes = st.Page(
     r'navigation/scopes.py',
     title='LAB. SCOPES',
-    icon='📈',
+    icon=':material/biotech:',
 )
 
 page_templates = st.Page(
     r'navigation/templates.py',
     title='TEMPLATES',
-    icon='📈',
+    icon=':material/text_snippet:',
 )
 
 
