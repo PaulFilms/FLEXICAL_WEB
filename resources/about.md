@@ -1,5 +1,5 @@
 <!-- `English:` -->
-:blue-background[💊 ENGLISH:]
+:blue-background[ ENGLISH:]
 
 Flexical is a solution for metroligia and calibration tasks. 
 
@@ -8,13 +8,13 @@ The environment is made up of three modules:
     - Web Application
     - Desktop Application
     - Database
-  
+
 Flexical's advantage over the competition is...
 
----
+----
 
 <!-- `Spanish:`  -->
-:blue-background[💊 SPANISH:]
+:blue-background[ SPANISH:]
 
 Flexical es una solución para tareas de metroligia y calibración.
 

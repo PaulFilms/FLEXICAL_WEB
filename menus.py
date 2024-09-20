@@ -2,8 +2,13 @@ import streamlit as st
 from db import *
 
 from enum import Enum
-from typing import Callable
+from typing import Callable, Tuple
 from io import StringIO
+
+import pandas as pd
+import numpy as np
+
+from pycalibration.calibration import TABLE_DATA
 
 
 ## _________________________________________________________________________________________________________________
@@ -208,6 +213,79 @@ def DB_EDITOR(TABLE: str, ID: str, DB: dict):
     
     if btn_editor: EDITOR()
 
+def TBL_EDITOR(DATAFRAME: pd.DataFrame) -> Tuple[pd.DataFrame, bool]:
+    '''
+    Render a st.data_editor with the basics fields to use for calculation
+    RANGE1, RANGE2, EVALUATION, C1, C2, C3 ...
+    '''
+    with st.popover(USUAL_ICONS.EXPANDER.value):
+        tg_format = st.toggle('FORMAT DECIMAL', value=False)
+        tg_checker = st.toggle('CHECKER', value=False)
+
+    if "tbl_float_format" not in st.session_state:
+        st.session_state.tbl_float_format = st.column_config.NumberColumn(format="%.2e")
+    
+    if tg_format:
+        st.session_state.tbl_float_format = st.column_config.NumberColumn(format=None)
+    else:
+        st.session_state.tbl_float_format = st.column_config.NumberColumn(format="%.2e")
+
+    DATAFRAME['RANGE1_MIN'] = DATAFRAME['RANGE1_MIN'].astype(float)
+    DATAFRAME['RANGE1_MAX'] = DATAFRAME['RANGE1_MAX'].astype(float)
+    DATAFRAME['RANGE2_MIN'] = DATAFRAME['RANGE2_MIN'].astype(float)
+    DATAFRAME['RANGE2_MAX'] = DATAFRAME['RANGE2_MAX'].astype(float)
+    DATAFRAME['C1'] = DATAFRAME['C1'].astype(float)
+    DATAFRAME['C2'] = DATAFRAME['C2'].astype(float)
+    DATAFRAME['C3'] = DATAFRAME['C3'].astype(float)
+    DATAFRAME['EVALUATION'] = DATAFRAME['EVALUATION'].astype(str)
+    DATAFRAME.insert(len(DATAFRAME.columns)-1, 'EVALUATION', DATAFRAME.pop('EVALUATION'))
+    DATAFRAME = DATAFRAME.reset_index()
+    del DATAFRAME['index']
+
+    column_config = dict()
+    for column in list(DATAFRAME.columns):
+        if DATAFRAME[column].dtype == np.float64:
+            # print("FLOAT")
+            column_config[column] = st.session_state.tbl_float_format
+    column_config['EVALUATION'] = st.column_config.TextColumn(default="(VALUE1*C1*1e1) + (C2*1e1) # VALUE1(<unit>), VALUE2(null)")
+
+    TABLE_EDITOR = st.data_editor(
+        DATAFRAME,
+        hide_index=True,
+        num_rows='dynamic',
+        # column_config={
+        #     'RANGE1_MIN': st.session_state.tbl_float_format,
+        #     'RANGE1_MAX': st.session_state.tbl_float_format,
+        #     'RANGE2_MIN': st.session_state.tbl_float_format,
+        #     'RANGE2_MAX': st.session_state.tbl_float_format,
+        #     'C1': st.session_state.tbl_float_format,
+        #     'C2': st.session_state.tbl_float_format,
+        #     'C3': st.session_state.tbl_float_format,
+        #     'EVALUATION': st.column_config.TextColumn(default="(VALUE1*C1*1e1) + (C2*1e1) # VALUE2"),
+        # },
+        column_config=column_config,
+        use_container_width=True
+    )
+
+    if tg_checker:
+        with st.container(border=False):
+            col13, col23, col33 = st.columns([1,1,2])
+            with col13:
+                VALUE1 = st.number_input("VALUE1", label_visibility='collapsed', min_value=TABLE_EDITOR['RANGE1_MIN'].min(), max_value=TABLE_EDITOR['RANGE1_MAX'].max())
+            with col23:
+                VALUE2 = st.number_input("VALUE2", label_visibility='collapsed', min_value=TABLE_EDITOR['RANGE2_MIN'].min(), max_value=TABLE_EDITOR['RANGE2_MAX'].max())
+            with col33:
+                result = str()
+                if VALUE1: result += f'VALUE1: {VALUE1} | '
+                if VALUE2 and not pd.isnull(VALUE2): result += f'VALUE2: {VALUE2} | '
+                RESULT = TABLE_DATA.GET_VALUE(TABLE_EDITOR, VALUE1, VALUE2)
+                if RESULT:  result += f'RESULT: {RESULT:.2E}'
+                else: result += f'RESULT: --'
+                st.text(result)
+    
+    btn_update = st.button(USUAL_ICONS.UPDATE.value + " UPDATE", key="TBL_EDITOR")
+    
+    return TABLE_EDITOR, btn_update
 
 
 ## _________________________________________________________________________________________________________________
