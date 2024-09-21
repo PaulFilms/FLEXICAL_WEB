@@ -5,7 +5,6 @@ Web framework to manage the main data of application
 
 ## WARNINGS:
 - `ALPHA Version / INCOMPLETE`
-- config_page should be on the home page or in the login page
 
 
 ## TASK:
@@ -28,8 +27,4 @@ Web framework to manage the main data of application
 - LOCAL DB:
     * INSERT MultiRow
     * Check Last Change
-- MOBILE APP
-    * QR Codes
-
-- ¿? Eliminar pip st-supabase-connection, y usar el sistema de supabase de streamlit
 

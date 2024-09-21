@@ -29,7 +29,7 @@ page_settings = st.Page(r"navigation/settings.py", title="Settings", icon=":mate
 page_database = st.Page(
     r"navigation/database.py",
     title="DATABASE",
-    icon='🗄️', #":material/help:",
+    icon=':material/database:', #"", 🗄️
     default=(st.session_state.role == ROLES.TECHNICIAN),
 )
 
@@ -45,6 +45,13 @@ page_procedures = st.Page(
     title='PROCEDURES',
     icon=':material/procedure:',
     default=(st.session_state.role == ROLES.ADMIN)
+)
+
+page_models = st.Page(
+    r"navigation/models.py",
+    title="MODELS",
+    icon=':material/directions_car:', #":material/help:",
+    # default=(st.session_state.role == ROLES.TECHNICIAN),
 )
 
 page_scopes = st.Page(
@@ -63,7 +70,7 @@ page_templates = st.Page(
 ## GROUPS
 pages_account = [page_logout, page_settings]
 pages_technician = [page_database, page_calibrations]
-pages_admin = [page_procedures, page_scopes, page_templates]
+pages_admin = [page_procedures, page_models, page_scopes, page_templates]
 
 ## NAVIGATION
 pages_dict = {}

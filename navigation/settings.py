@@ -63,3 +63,18 @@ if st.selectbox(
     options=['light', 'dark']
     ):
     pass
+
+components.html(
+'''
+<script>
+	import Widget from './Widget.svelte';
+</script>
+
+<div>
+	<Widget />
+</div>
+
+<div class="foo">
+	<button disabled>can't touch this</button>
+</div>
+''')

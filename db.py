@@ -51,15 +51,28 @@ def sql_table(table: str, count: int):
 
 @st.cache_resource
 def sql_row(table: str, field: str, eq: int, count: int):
-    return supabase.table(table).select('*').eq(field, eq).execute().data
+    return supabase.table(table).select('*').eq(field, eq).execute().data[0]
 
 @st.cache_resource
 def sql_column(table: str, field: str, count: int) -> list:
     SQL = supabase.table(table).select(field).order(field).execute().data
     return [data[field] for data in SQL]
 
-def sql_update_id(table: str, id: any, fields: dict[str, any]):
-    update_dict = fields
+def sql_insert(table: str, values: dict) -> None:
+    insert_dict = values
+    insert_dict['FIRM'] = get_firm()
+    response = (
+        supabase.table(table)
+        .insert(insert_dict)
+        .execute()
+    )
+    if table not in st.session_state:
+        st.session_state[table] = 1
+    st.session_state[table] += 1
+    return response
+
+def sql_update_id(table: str, id: any, values: dict[str, any]):
+    update_dict = values
     update_dict['FIRM'] = get_firm()
     response = (
         supabase.table(table)

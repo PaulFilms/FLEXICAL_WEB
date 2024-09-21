@@ -27,6 +27,10 @@ class TEMPLATE:
         VALUE1 = auto()
         VALUE2 = auto()
 
+
+## SESSION STATES
+## __________________________________________________________________________________________________
+
 if 'role' not in st.session_state:
     st.session_state.role = None
 
@@ -42,7 +46,7 @@ if 'TEMPLATES' not in st.session_state:
 #     return supabase.table('PROCEDURES').select('Id').order("Id").execute().data
 
 
-## MENU
+## PAGE
 ## __________________________________________________________________________________________________
 
 def TEST_EDITOR(ID: str, DB: dict) -> None:
@@ -53,7 +57,7 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
         PROCEDURE_ID = st.selectbox("PROCEDURE Id *", options=procedures, index=None)
         title = str()
         if PROCEDURE_ID:
-            title = sql_row("PROCEDURES", "Id", PROCEDURE_ID, st.session_state.TEMPLATES)[0]['TITLE']
+            title = sql_row("PROCEDURES", "Id", PROCEDURE_ID, st.session_state.TEMPLATES)['TITLE']
         TEST = st.text_input("TEST TITLE *", value=title)
         PARAMETERS = st.text_input("TEST PARAMETERS")
         CONFIG = st.text_input("CONFIG & CONNECTIONS")
@@ -192,7 +196,7 @@ def FILTERS(dataFrame: pd.DataFrame):
     FLTR_ID: str = None
     
     def get_filter():
-        df_filtered = DATAFRAME.copy()
+        df_filtered = dataFrame.copy()
         if FLTR_DEVICE: 
             df_filtered = df_filtered[df_filtered['DEVICE_TYPE']==FLTR_DEVICE]
         if FLTR_MANUFACTURER: 
@@ -247,7 +251,7 @@ if st.session_state.filter:
 if TEMPLATE_ID:
     SQL = sql_row('TEMPLATES', 'Id', TEMPLATE_ID, st.session_state.TEMPLATES)
     # st.write(SQL)
-    CURRENT_TEMPLATE = TEMPLATE.TypeDict(**SQL[0])
+    CURRENT_TEMPLATE = TEMPLATE.TypeDict(**SQL)
     # CURRENT_TEMPLATE = DATAFRAME[DATAFRAME['Id']==TEMPLATE_ID].iloc[0]
     # CURRENT_TEMPLATE = TEMPLATE.TypeDict(**dict(CURRENT_TEMPLATE))
     # st.write(CURRENT_TEMPLATE)
@@ -274,6 +278,10 @@ if TEMPLATE_ID:
 
 #     # JSON = json.loads(CURRENT_TEMPLATE['DB'])
 #     # st.json(JSON)
+
+
+    ## TABS
+    ## __________________________________________________________________________________________________
 
     st.text('')
     tab_info, tab_testlist, tab_pydata = st.tabs([':material/info: INFO', ':material/lists: TEST', ':material/developer_mode: PYDATA'])
