@@ -132,7 +132,7 @@ if PROCEDURE_ID:
         st.text('')
         with st.expander('TEST REPORT', icon=':material/lab_profile:'):
             st.text('')
-            TESTREPORT = REPORT.TESTREPORT.format(**CURRENT_DB[fld_report][REPORT.fields.TESTREPORT.name])
+            TESTREPORT = REPORT.TESTREPORT.data(**CURRENT_DB[fld_report][REPORT.fields.TESTREPORT.name])
             # tr_PARAMETERS = st.text_input(REPORT.TESTREPORT.fields.PARAMETERS.name, value=TESTREPORT.PARAMETERS, placeholder='RANGE: {RANGE} V | NOMINAL: {VALUE1} V')
             # tr_MEASUREMENT = st.text_input(REPORT.TESTREPORT.fields.MEASUREMENT.name, value=TESTREPORT.MEASUREMENT, placeholder='{DEVIATION} V')
             # tr_UNCERTAINTY = st.text_input(REPORT.TESTREPORT.fields.UNCERTAINTY.name, value=TESTREPORT.UNCERTAINTY, placeholder='{UNCERTAINTY:.1E} V')
@@ -141,7 +141,7 @@ if PROCEDURE_ID:
                 REPORT.TESTREPORT.fields.PARAMETERS.name: st.text_input(REPORT.TESTREPORT.fields.PARAMETERS.name, help='** Example: RANGE: {RANGE} V | NOMINAL: {VALUE1} V', value=TESTREPORT.PARAMETERS, placeholder='RANGE: {RANGE} V | NOMINAL: {VALUE1} V'),
                 REPORT.TESTREPORT.fields.MEASUREMENT.name: st.text_input(REPORT.TESTREPORT.fields.MEASUREMENT.name, help='** Example: {DEVIATION} dB', value=TESTREPORT.MEASUREMENT, placeholder='{DEVIATION} V'),
                 REPORT.TESTREPORT.fields.UNCERTAINTY.name: st.text_input(REPORT.TESTREPORT.fields.UNCERTAINTY.name, help='** Example: {UNCERTAINTY:.1E} dB', value=TESTREPORT.UNCERTAINTY, placeholder='{UNCERTAINTY:.1E} V'),
-                REPORT.TESTREPORT.fields.LIMIT_OF_ERROR.name: st.text_input(REPORT.TESTREPORT.fields.LIMIT_OF_ERROR.name, help='** Example: ± {LIMIT_OF_ERROR:.1E} V', value=TESTREPORT.LIMIT_OF_ERROR, placeholder='± {SPECIFICATION:.1E} V'),
+                REPORT.TESTREPORT.fields.LIMIT_OF_ERROR.name: st.text_input(REPORT.TESTREPORT.fields.LIMIT_OF_ERROR.name, help='** Example: ± {LIMIT_OF_ERROR:.1E} V', value=TESTREPORT.LIMIT_OF_ERROR, placeholder='± {LIMIT_OF_ERROR:.1E} V'),
             }
 
         ## MEASUREMENT UNITS

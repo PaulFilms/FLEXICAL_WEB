@@ -1,7 +1,7 @@
 <img src="./resources/LOGO2.svg">
 
 # FLEXICAL_WEB
-Web framework to manage the main data of application
+Flexical Web framework to manage the main data of application
 
 ## WARNINGS:
 - `ALPHA Version / INCOMPLETE`
@@ -27,4 +27,9 @@ Web framework to manage the main data of application
 - LOCAL DB:
     * INSERT MultiRow
     * Check Last Change
+
+- Pasar funciones de Menus a App
+- Terminar MODELS
+- Definir roles con los usuarios, y dependiendo de cada rol, permitir o no ediciones de Items
+- Crear Backup de la base de datos
 

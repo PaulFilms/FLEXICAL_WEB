@@ -2,5 +2,6 @@ streamlit
 st-supabase-connection
 matplotlib
 openpyxl
-pycalibration @ git+https://github.com/PaulFilms/pycalibration.git@main
-flexical @ git+https://github.com/PaulFilms/Flexical@main
+# pycalibration @ git+https://github.com/PaulFilms/pycalibration.git@main
+# flexical @ git+https://github.com/PaulFilms/Flexical@main
+# pyreports @ git+https://github.com/PaulFilms/PyReports.git@main

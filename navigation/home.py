@@ -11,7 +11,7 @@ if 'role' not in st.session_state:
 
 st.image(os.path.join(path_resources, r"LOGO2.svg"), use_column_width=False) # flexical_developer
 
-st.text("ABOUT FLEXICAL")
+st.markdown(":material/info: ABOUT FLEXICAL")
 
 with st.container(border=True):
 

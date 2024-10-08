@@ -8,7 +8,7 @@ from io import StringIO
 import pandas as pd
 import numpy as np
 
-from pycalibration.calibration import TABLE_DATA
+from flexical.calibration import TABLE_DATA
 
 
 ## _________________________________________________________________________________________________________________

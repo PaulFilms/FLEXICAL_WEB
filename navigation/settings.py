@@ -2,7 +2,10 @@ import os
 from menus import *
 import streamlit.components.v1 as components
 
-st.logo(os.path.join(path_resources, 'LOGO2.svg'))
+# st.logo(os.path.join(path_resources, 'LOGO2.svg'))
+
+if st.button(':material/database: GET DATABASE BACKUP', use_container_width=True):
+    pass
 
 st.title('SETTINGS PAGE')
 

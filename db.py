@@ -1,4 +1,5 @@
 import json
+from typing import Union
 from enum import Enum
 from datetime import datetime
 import streamlit as st
@@ -50,13 +51,19 @@ def sql_table(table: str, count: int):
     return supabase.table(table).select('*').order("Id").execute().data
 
 @st.cache_resource
-def sql_row(table: str, field: str, eq: int, count: int):
+def sql_row(table: str, field: str, eq: int, count: int) -> dict[str, any]:
     return supabase.table(table).select('*').eq(field, eq).execute().data[0]
 
 @st.cache_resource
 def sql_column(table: str, field: str, count: int) -> list:
     SQL = supabase.table(table).select(field).order(field).execute().data
     return [data[field] for data in SQL]
+
+@st.cache_resource
+def sql_db(table: str, id: any, count: int) -> dict:
+    data = supabase.table(table).select('DB').eq('Id', id).execute().data[0]
+    data_dict = json.loads(data['DB'])
+    return data_dict
 
 def sql_insert(table: str, values: dict) -> None:
     insert_dict = values
