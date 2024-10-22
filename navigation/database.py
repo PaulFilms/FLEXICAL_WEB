@@ -84,6 +84,7 @@ class FORMS:
         sleep(2)
         st.session_state.FORM_BTN = None
         st.session_state.FORM_FIELDS = None
+        st.session_state[TABLE] += 1
         st.rerun()
 
     @st.dialog("📄 NEW COMPANY")
@@ -171,10 +172,13 @@ class FORMS:
         ]
         FORMS._GET_FIELDS(FIELDS)
         if st.session_state.FORM_BTN:
+            st.session_state.FORM_FIELDS['SERIAL_ID'] = st.session_state.FORM_FIELDS['SERIAL_ID'].upper()
+            st.session_state.FORM_FIELDS['INVENTORY_ID'] = st.session_state.FORM_FIELDS['INVENTORY_ID'].upper()
             st.session_state.FORM_FIELDS['Id'] = f"{st.session_state.FORM_FIELDS['MODEL_ID']}_{st.session_state.FORM_FIELDS['SERIAL_ID']}".replace(chr(32), str()).upper()
             st.session_state.FORM_FIELDS['COMPANY_ID'] = st.session_state.FORM_FIELDS.pop('CUSTOMER')
             if FORMS._CHECK('DEVICES', FIELDS):
-                FORMS._INSERT('DEVICES', st.session_state.FORM_FIELDS)
+                VALUES = st.session_state.FORM_FIELDS
+                FORMS._INSERT('DEVICES', VALUES)
 
     @st.dialog("📄 NEW PROCEDURE")
     def PROCEDURES():

@@ -113,7 +113,8 @@ if st.session_state.filter:
 
 if MODEL_ID:
     CURRENT_MODEL = sql_row('MODELS', 'Id', MODEL_ID, st.session_state.MODELS)
-    CURRENT_DB: Dict[str, dict] = json.loads(CURRENT_MODEL[tables.MODELS.DB.name])
+    # CURRENT_DB: Dict[str, dict] = json.loads(CURRENT_MODEL[tables.MODELS.DB.name])
+    CURRENT_DB: Dict[str, dict] = CURRENT_MODEL[tables.MODELS.DB.name]
     # st.json(CURRENT_MODEL, expanded=False)
     
 
@@ -195,7 +196,7 @@ if MODEL_ID:
                 if len(TBL_SPECIFICATION) == 0:
                     CURRENT_DB['SPECIFICATIONS'][CURRENT_PROCEDURE] = {}
                 else:
-                    CURRENT_DB['SPECIFICATIONS'][CURRENT_PROCEDURE] = TBL_SPECIFICATION.to_dict()
+                    CURRENT_DB['SPECIFICATIONS'][CURRENT_PROCEDURE] = TBL_SPECIFICATION.replace(np.nan, None).to_dict()
                 sql_update_db('MODELS', MODEL_ID, CURRENT_DB)
                 st.toast(body="🏁 SPECIFICATIONS Updated")
                 st.rerun()

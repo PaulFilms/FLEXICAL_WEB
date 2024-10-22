@@ -95,7 +95,7 @@ def sql_update_id(table: str, id: any, values: dict[str, any]):
 def sql_update_db(TABLE: str, ID, DB: dict):
     response = (
         supabase.table(TABLE)
-        .update({"DB": json.dumps(DB), "FIRM": get_firm()})
+        .update({'DB': DB, 'FIRM': get_firm()})
         .eq("Id", ID)
         .execute()
     )

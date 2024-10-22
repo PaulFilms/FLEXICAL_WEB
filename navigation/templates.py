@@ -164,7 +164,7 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
         )
         if st.button(USUAL_ICONS.UPDATE.value + " UPDATE", key='btn_tbl_update'):
             tbl_cal_test['RANGE_TX'] = tbl_cal_test['RANGE_TX'].replace({False: str(), np.nan: str()})
-            DB["TEST_LIST"][loc]['MEASURES'] = tbl_cal_test.to_dict()
+            DB["TEST_LIST"][loc]['MEASURES'] = tbl_cal_test.replace(np.nan, None).to_dict()
             try:
                 sql_update_db("TEMPLATES", ID, DB)
                 # st.session_state.TEMPLATES += 1
