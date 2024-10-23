@@ -32,7 +32,6 @@ cython_debug/
 .devcontainer/
 secrets.toml
 
-
 # My Develop
 _temp.zip
 REPORTS/

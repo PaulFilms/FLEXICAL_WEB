@@ -144,6 +144,8 @@ if MODEL_ID:
             # COLUMN_NAME = "PROCEDURE Id"
             # MODEL_PROCEDURES = pd.DataFrame(list(st.session_state.DB_DATA['SPECIFICATIONS'].keys()), columns=[COLUMN_NAME])
             # TBL_PROCEDURES, CURRENT_PROCEDURE = DATAFRAME_LIST(MODEL_PROCEDURES, COLUMN_NAME) # st.session_state.MODEL_PROCEDURES
+            if not CURRENT_DB.get('SPECIFICATIONS'):
+                CURRENT_DB['SPECIFICATIONS'] = dict()
             procedures = list(CURRENT_DB['SPECIFICATIONS'].keys())
             procedure = st.dataframe(
                 data=pd.DataFrame(procedures, columns=['VALUE']),

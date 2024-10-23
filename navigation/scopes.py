@@ -276,7 +276,7 @@ if MODEL_ID:
                 if len(TBL_CMC) == 0:
                     CURRENT_DB['PROCEDURES'][CURRENT_PROCEDURE]['CMC'] = {}
                 else:
-                    CURRENT_DB['PROCEDURES'][CURRENT_PROCEDURE]['CMC'] = TBL_CMC.to_dict()
+                    CURRENT_DB['PROCEDURES'][CURRENT_PROCEDURE]['CMC'] = TBL_CMC.replace(np.nan, None).to_dict()
                 sql_update_db('CMC', MODEL_ID, CURRENT_DB)
                 st.toast("🏁 CMC Updated")
 

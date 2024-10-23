@@ -55,15 +55,11 @@ if PROCEDURE_ID:
     ## __________________________________________________________________________________________________
 
     CURRENT_DB: dict = None
-    if isinstance(CURRENT_PROCEDURE[tables.PROCEDURES.DB.name], str):
-        try:
-            CURRENT_DB = json.loads(CURRENT_PROCEDURE[tables.PROCEDURES.DB.name])
-        except:
-            CURRENT_DB = dict()
-    elif isinstance(CURRENT_PROCEDURE[tables.PROCEDURES.DB.name], dict):
-        CURRENT_DB = CURRENT_PROCEDURE[tables.PROCEDURES.DB.name]
-    else:
-        CURRENT_DB = dict()
+
+    # try:
+    CURRENT_DB = CURRENT_PROCEDURE[tables.PROCEDURES.DB.name]
+    # excel:
+        # CURRENT_DB = dict()
     
     for fld in table_db.PROCEDURES:
         if fld.name not in CURRENT_DB:
@@ -167,7 +163,8 @@ if PROCEDURE_ID:
             CURRENT_DB[fld_report][fld_measurement] = MEASUREMENT_DICT
             supabase.table('PROCEDURES').update({
                     tables.PROCEDURES.TITLE.name: tx_title,
-                    tables.PROCEDURES.DB.name: json.dumps(CURRENT_DB),
+                    # tables.PROCEDURES.DB.name: json.dumps(CURRENT_DB),
+                    tables.PROCEDURES.DB.name: CURRENT_DB,
                     tables.PROCEDURES.FIRM.name: get_firm(),
                 }).eq('Id', PROCEDURE_ID).execute()
             st.session_state.PROCEDURES += 1
@@ -197,7 +194,7 @@ if PROCEDURE_ID:
             if len(TBL_CMC) == 0:
                 CURRENT_DB[table_db.PROCEDURES.CMC.name] = {}
             else:
-                CURRENT_DB[table_db.PROCEDURES.CMC.name] = TBL_CMC.to_dict()
+                CURRENT_DB[table_db.PROCEDURES.CMC.name] = TBL_CMC.replace(np.nan, None).to_dict()
             # SQL_UPDATE_DB("PROCEDURES", PROCEDURE_ID, st.session_state.DB_DATA)
             sql_update_db('PROCEDURES', PROCEDURE_ID, CURRENT_DB)
             st.toast("🏁 CMC Updated")

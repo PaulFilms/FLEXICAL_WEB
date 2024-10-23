@@ -61,9 +61,10 @@ def sql_column(table: str, field: str, count: int) -> list:
 
 @st.cache_resource
 def sql_db(table: str, id: any, count: int) -> dict:
-    data = supabase.table(table).select('DB').eq('Id', id).execute().data[0]
-    data_dict = json.loads(data['DB'])
-    return data_dict
+    # data = supabase.table(table).select('DB').eq('Id', id).execute().data[0]
+    # data_dict = json.loads(data['DB'])
+    # return data_dict
+    return supabase.table(table).select('DB').eq('Id', id).execute().data[0]['DB']
 
 def sql_insert(table: str, values: dict) -> None:
     insert_dict = values

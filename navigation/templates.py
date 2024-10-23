@@ -62,7 +62,7 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
         CONFIG = st.text_input("CONFIG & CONNECTIONS")
         INFO = st.text_area("INFO")
         if st.button("➕ INSERT NEW TEST", key='btn_test_ADD'):
-            NEW_TEST = CALIBRATION.TEST.data(TEST, PARAMETERS, CONFIG, INFO, PROCEDURE_ID, CALIBRATION={})
+            NEW_TEST = CALIBRATION.TEST.data(TEST, PARAMETERS, CONFIG, INFO, PROCEDURE_ID, MEASURES={})
             DB["TEST_LIST"].append(NEW_TEST.toDict())
             try:
                 sql_update_db("TEMPLATES", ID, DB)
@@ -174,10 +174,12 @@ def TEST_EDITOR(ID: str, DB: dict) -> None:
 
 def PRINT_TEMPLATE(template_id: str):
     sql_template = sql_row('TEMPLATES', 'Id', template_id, st.session_state.TEMPLATES)
-    template_db = json.loads(sql_template['DB'])
+    # template_db = json.loads(sql_template['DB'])
+    template_db = sql_template['DB']
     model_id = sql_template['MODEL_ID']
     sql_model = sql_row('MODELS', 'Id', model_id, st.session_state.MODELS)
-    model_db = json.loads(sql_model['DB'])
+    # model_db = json.loads(sql_model['DB'])
+    model_db = sql_model['DB']
 
     device = DEVICE.data(
         Id=None,
@@ -210,6 +212,7 @@ def PRINT_TEMPLATE(template_id: str):
     DOCUMENT.PRINT_XLS.set_format(xls_report)
     DOCUMENT.PRINT_XLS.set_header(xls_report, device=device, logo_path=os.path.join(r'resources',r'logo.png'), scale=13)
     # DOCUMENT.PRINT_XLS.print_page3(xls_report)
+    xls_report.save()
 
     for test in template_db['TEST_LIST']:
         TEST = CALIBRATION.TEST.data(**test)
@@ -218,6 +221,8 @@ def PRINT_TEMPLATE(template_id: str):
         procedure_db = sql_db('PROCEDURES', procedure_id, st.session_state.PROCEDURES)
         # standards = sql_procedure['STANDARDS']
         measures_df = pd.DataFrame(TEST.MEASURES)
+        if not model_db['SPECIFICATIONS'].get(procedure_id):
+            model_db['SPECIFICATIONS'][procedure_id] = dict()
         specification_df = pd.DataFrame(model_db['SPECIFICATIONS'][procedure_id])
         cmc_df = pd.DataFrame(procedure_db['CMC'])
         report_format = REPORT.data(
@@ -246,7 +251,8 @@ def PRINT_TEMPLATE(template_id: str):
             VALUE2 = measure.VALUE2
             if report_format.ABSOLUTE_VALUES:
                 VALUE1 = abs(VALUE1)
-                VALUE2 = abs(VALUE2)
+                if VALUE2: 
+                    VALUE2 = abs(VALUE2)
             measure.CMC = TABLE_DATA.GET_VALUE(cmc_df, VALUE1, VALUE2)
             measure.LIMIT_OF_ERROR = TABLE_DATA.GET_VALUE(specification_df, VALUE1, VALUE2)
             try: measure.VALIDATION['RESOLUTION'] = specification_df[specification_df['RANGE1_MAX']==specification_df['RANGE']]['RESOLUTION'].max()
