@@ -224,6 +224,8 @@ def PRINT_TEMPLATE(template_id: str):
         if not model_db['SPECIFICATIONS'].get(procedure_id):
             model_db['SPECIFICATIONS'][procedure_id] = dict()
         specification_df = pd.DataFrame(model_db['SPECIFICATIONS'][procedure_id])
+        # print(specification_df)
+        # print()
         cmc_df = pd.DataFrame(procedure_db['CMC'])
         report_format = REPORT.data(
             RESULT_TYPE=procedure_db['REPORT']['RESULT_TYPE'],
@@ -255,17 +257,20 @@ def PRINT_TEMPLATE(template_id: str):
                     VALUE2 = abs(VALUE2)
             measure.CMC = TABLE_DATA.GET_VALUE(cmc_df, VALUE1, VALUE2)
             measure.LIMIT_OF_ERROR = TABLE_DATA.GET_VALUE(specification_df, VALUE1, VALUE2)
-            try: measure.VALIDATION['RESOLUTION'] = specification_df[specification_df['RANGE1_MAX']==specification_df['RANGE']]['RESOLUTION'].max()
+            try: measure.VALIDATION['RESOLUTION'] = specification_df[specification_df['RANGE1_MAX']==measure.RANGE]['RESOLUTION'].max()
             except: measure.VALIDATION['RESOLUTION'] = 0.0
 
             ## PYDATA
 
+
             ## PRINT
+            # print(measure)
+            # print()
             DOCUMENT.PRINT_XLS.print_measure(xls_report, measure, report_format)
             xls_report.row_inc()
 
         ## FIN TEST
-        xls_report.row_inc()
+        xls_report.row_inc(2)
         xls_report.save()
 
     ## FIN REPORT
